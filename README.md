@@ -1,8 +1,8 @@
 # web-edf-viewer
 The aims of this project is to use and see limitations of :
-* [File Api][https://developer.mozilla.org/en-US/docs/Web/API/File] to read a local EDF File
-* ~~ [Sound api][https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API] to apply filters and montages to the signals ~~ => see below
-*[AssemblyScript][https://github.com/AssemblyScript/assemblyscript] Apply filters and montages to the signals
+* [File Api](https://developer.mozilla.org/en-US/docs/Web/API/File) to read a local EDF File
+* ~~[Sound api](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) to apply filters and montages to the signals~~ => see below
+*[AssemblyScript](https://github.com/AssemblyScript/assemblyscript) Apply filters and montages to the signals
 
 
 ## Why we cannot use WebAudio
