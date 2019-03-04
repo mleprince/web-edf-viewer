@@ -1,61 +1,29 @@
+import { Montage, Signal } from './model/montage';
+import { MontageService } from './service/montage/js.montage.service';
+import { FilterService } from './service/filter/wsam.filter.service';
+
 export class SignalTransformer {
 
+    currentMontage: Montage;
 
-    /**
-     * The buffer has this form :
-     * length ch1 + points ch1
-     */
+    constructor(
+        private filterService: FilterService,
+        private montageService: MontageService
 
-    constructor() {
+    ) {
 
-
-        var memory = new WebAssembly.Memory({
-            initial: 1000
-        });
-        const wasmBuffer = memory.buffer;
-
-        const array: Float32Array = new Float32Array(10);
-
-        for (let i = 0; i < array.length; i++) {
-            array[i] = i;
-        }
-
-        var imports = {
-            env: {
-                memory
-            },
-            // Debug functions
-            console: {
-                logInt(idx: number, val: number) {
-                    console.log("logInt idx : " + idx + "  val : " + val);
-                },
-                logFloat(idx: number, val: number) {
-                    console.log("logFloat idx : " + idx + "  val : " + val);
-                },
-            }
-        };
-
-
-        fetch("./build/untouched.wasm").then(result => result.arrayBuffer()).then(arrayBuffer => {
-            WebAssembly.instantiate(arrayBuffer, imports).then(resultObject => {
-
-                const wasmModule = resultObject.instance.exports;
-
-                const wasmSourceArray = new Float32Array(wasmBuffer, 0, array.length);
-
-                const wasmResultArray = new Float32Array(wasmBuffer, array.length * 4, array.length);
-
-                wasmSourceArray.set(array);
-
-                wasmModule.gain(0, array.length, array.length * 4, 2);
-
-                console.log(wasmResultArray);
-                console.log(wasmSourceArray);
-            })
-        })
-
-
+        this.currentMontage = new Montage("", []);
     }
 
+    getFinalSignal(rawData: Array<Float32Array>): Array<{ data: Float32Array, meta: Signal }> {
 
+        return this.montageService
+            .applyMontage(rawData, this.currentMontage)
+            .map(displayedSignal => {
+                return {
+                    data: this.filterService.filterSignal(displayedSignal.data, displayedSignal.meta),
+                    meta: displayedSignal.meta
+                };
+            })
+    }
 }

@@ -60,7 +60,5 @@ function readWindow() {
   }
 }
 
-new SignalTransformer();
-
 
 
