@@ -4,13 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "postinstall": "",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "http-server ./"
+    "start": "live-server ./",
+    "asbuild:untouched": "asc assembly/index.ts -b build/untouched.wasm -t build/untouched.wat --importMemory --sourceMap --validate --debug",
+    "asbuild:optimized": "asc assembly/index.ts -b build/optimized.wasm -t build/optimized.wat--importMemory --sourceMap --validate --optimize",
+    "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "http-server": "^0.11.1",
+    "@types/dygraphs": "^1.1.8",
+    "@types/webassembly-js-api": "0.0.2",
+    "assemblyscript": "github:AssemblyScript/assemblyscript",
+    "live-server": "^1.2.1",
     "typescript": "^3.3.3333"
   },
   "dependencies": {
