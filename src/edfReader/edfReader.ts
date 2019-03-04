@@ -1,4 +1,5 @@
 import { PromiseFileReader } from './PromiseFileReader';
+import { FileParser } from './fileParser';
 
 export class EDFFile {
 
@@ -58,7 +59,6 @@ export class EDFFile {
 
             const fileReader = new FileReader();
 
-
             fileReader.onerror = error => reject(error);
             fileReader.onloadend = () => {
 
@@ -66,21 +66,24 @@ export class EDFFile {
 
                 console.log("file size : " + raw.byteLength);
 
-                const array = new Uint16Array(raw);
+                const samples = new Int16Array(raw);
 
-                const result: Array<Array<number>> = [];
+                const result : Array<Array<number>> = this.channels.map(channel => []);
 
+                let index = 0;
+
+                // we fill the samples in one array by channel
+                for (let i = 0; i < numberOfBlocksToGet; i++) {
+                    this.channels.forEach((channel, j) => {
+                        for (let k = 0; k < channel.numberOfSamplesInDataRecord; k++) {
+                            result[j].push(samples[index]);
+                            index++;
+                        }
+                    })
+                }
+
+                // cut before and after
                 this.channels.forEach((channel, i) => {
-
-                    const channelData = [];
-
-                    const numberOfPoints = numberOfBlocksToGet * channel.numberOfSamplesInDataRecord;
-
-                    for (let j = 0; j < numberOfPoints; j++) {
-                        channelData.push(array[i + this.channels.length * j])
-                    }
-
-                    // cut before and after
 
                     const frequency = channel.numberOfSamplesInDataRecord / this.header.blockDuration;
 
@@ -88,9 +91,9 @@ export class EDFFile {
 
                     const after = (lastBlockEndTime - endTime) * frequency;
 
-                    result.push(channelData.slice(before, channelData.length - after));
-                });
+                    result[i] = result[i].slice(before, result[i].length - after);
 
+                });
 
                 resolve(result);
             }
@@ -164,43 +167,9 @@ export class EDFHeader {
     }
 }
 
-export class FileParser {
-
-    private offset = 0;
-
-    constructor(private rawData: ArrayBuffer) { }
-
-    public readString(stringLength: number): string {
-        let rawValue: ArrayBuffer = this.rawData.slice(this.offset, this.offset + stringLength);
-        this.offset += stringLength;
-        return new TextDecoder("utf-8").decode(rawValue);
-    }
-
-    public readInteger(stringLength: number): number {
-        return parseInt(this.readString(stringLength));
-    }
-
-    public moveOffset(moveOffset: number) {
-        this.offset += moveOffset;
-    }
-
-    public readStringList(listLength: number, stringUnitLength: number): Array<string> {
-        const array: Array<string> = [];
-
-        for (let i = 0; i < listLength; i++) {
-            array.push(this.readString(stringUnitLength));
-        }
-
-        return array;
-    }
-
-    public readNumberList(listLength: number, stringUnitLength: number): Array<number> {
-        return this.readStringList(listLength, stringUnitLength).map(str => parseInt(str));
-    }
-}
-
-
 export class EDFChannel {
+
+    public readonly scaleFactor: number;
 
     constructor(
         public readonly label: string, // 16 ascii
@@ -212,7 +181,9 @@ export class EDFChannel {
         public readonly digitalMaximum: number, // 8 ascii
         public readonly prefiltering: string, // 80 ascii
         public readonly numberOfSamplesInDataRecord: number // 8 ascii
-    ) { }
+    ) {
+        this.scaleFactor = (physicalMaximum - physicalMinimum) / (digitalMaximum - digitalMinimum);
+    }
 
 
     static readChannelList(raw: ArrayBuffer, numberOfChannels: number): Array<EDFChannel> {
