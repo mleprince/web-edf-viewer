@@ -1,29 +1,33 @@
 {
-  "name": "viewer-local-web",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "edf-viewer",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
-    "postinstall": "",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "live-server ./",
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
     "asbuild:untouched": "asc assembly/filter.ts -b build/untouched.wasm -t build/untouched.wat --importMemory --sourceMap --validate --debug",
     "asbuild:optimized": "asc assembly/filter.ts -b build/optimized.wasm -t build/optimized.wat --importMemory --sourceMap --validate --optimize",
     "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized"
   },
-  "author": "",
-  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^4.3.1",
+    "dygraphs": "^2.1.0",
+    "vue": "^2.6.6",
+    "vue-class-component": "^6.0.0",
+    "vue-property-decorator": "^7.3.0",
+    "vue-router": "^3.0.1",
+    "vuex": "^3.0.1",
+    "vuex-class-component": "^1.4.2"
+  },
   "devDependencies": {
     "@types/dygraphs": "^1.1.8",
     "@types/webassembly-js-api": "0.0.2",
+    "@vue/cli-plugin-babel": "^3.5.0",
+    "@vue/cli-plugin-typescript": "^3.5.0",
+    "@vue/cli-service": "^3.5.0",
     "assemblyscript": "github:AssemblyScript/assemblyscript",
-    "live-server": "^1.2.1",
-    "typescript": "^3.3.3333"
-  },
-  "dependencies": {
-    "dygraphs": "^2.1.0",
-    "moment": "^2.22.2",
-    "requirejs": "^2.3.6",
-    "rxjs": "^6.4.0"
+    "typescript": "^3.2.1",
+    "vue-template-compiler": "^2.5.21"
   }
 }

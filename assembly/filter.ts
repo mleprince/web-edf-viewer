@@ -1,4 +1,4 @@
-import "allocator/tlsf";
+import "allocator/arena";
 
 export function filter(
     outputOffset: i32,
@@ -9,17 +9,6 @@ export function filter(
     sourceArrayOffset: i32,
     destinationArrayOffset: i32
 ): void {
-
-    let inputCoeffList: Float32Array = new Float32Array(inputCoeffCount);
-    let ouputCoeffList: Float32Array = new Float32Array(outputCoeffCount);
-
-    for (let i = 0; i < outputCoeffCount; i++) {
-        ouputCoeffList[i] = load<f32>((outputOffset + 4 * i));
-    }
-    for (let i = 0; i < inputCoeffCount; i++) {
-        inputCoeffList[i] = load<f32>((inputOffset + 4 * i));
-    }
-
 
     inputCoeffCount = inputCoeffCount - 1;
     outputCoeffCount = outputCoeffCount - 1;
@@ -34,15 +23,15 @@ export function filter(
 
         let inputPoint: f32 = load<f32>((sourceArrayOffset + 4 * i));
 
-        let acc: f32 = inputCoeffList[0] * inputPoint;
+        let acc: f32 = load<f32>(inputOffset) * inputPoint;
 
         for (let j: i32 = 1; j <= inputCoeffCount; j++) {
             let p: i32 = (inputIdx + inputCoeffCount - j) % inputCoeffCount;
-            acc += inputCoeffList[j] * input[p]
+            acc += load<f32>(inputOffset + 4 * j) * input[p]
         }
         for (let j: i32 = 1; j <= outputCoeffCount; j++) {
             let p: i32 = (outputIdx + outputCoeffCount - j) % outputCoeffCount;
-            acc -= ouputCoeffList[j] * output[p];
+            acc -= load<f32>(outputOffset + 4 * i) * output[p];
         }
         if (inputCoeffCount > 0) {
             input[inputIdx] = inputPoint;
@@ -55,6 +44,8 @@ export function filter(
 
         store<f32>(destinationArrayOffset + 4 * i, acc);
     }
+
+    memory.reset();
 }
 
 

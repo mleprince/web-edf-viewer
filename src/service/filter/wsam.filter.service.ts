@@ -1,35 +1,32 @@
-import { Signal } from './../../model/montage';
+import FilterService from "./filter.service";
 
-export interface FilterService {
-    filterSignal(data: Float32Array, signal: Signal): Float32Array;
-}
+export default class WebAssemblyFilterService extends FilterService {
 
-export class WebAssemblyFilterService implements FilterService {
+    private wasmModule: any;
 
-    wasmModule: any;
+    private wasmBuffer: ArrayBuffer;
 
-    wasmBuffer: ArrayBuffer;
-
-    isInitiated = false;
+    private isInitiated = false;
 
     constructor() {
+        super();
 
         // 640kb => I think it is enough
         //  TODO : optim memory consumption
-        var memory = new WebAssembly.Memory({
-            initial: 10
+        const memory = new WebAssembly.Memory({
+            initial: 100,
         });
 
         this.wasmBuffer = memory.buffer;
 
-        var imports = {
+        const imports = {
             module: {},
             env: {
-                memory: memory,
-                table: new WebAssembly.Table({ initial: 0, element: 'anyfunc' }),
+                memory,
+                table: new WebAssembly.Table({ initial: 0, element: "anyfunc" }),
                 abort(msgPtr: number, filePtr: number, line: number, column: number) {
                     throw new Error(`index.ts: abort at [line  ${line} / column ${column}]`);
-                }
+                },
             },
             // Debug functions
             console: {
@@ -39,37 +36,24 @@ export class WebAssemblyFilterService implements FilterService {
                 logFloat(idx: number, val: number) {
                     console.log("logFloat idx : " + idx + "  val : " + val);
                 },
-            }
+            },
         };
 
-        fetch("./build/untouched.wasm").then(result => result.arrayBuffer()).then(arrayBuffer => {
+        fetch("./build/optimized.wasm").then(result => result.arrayBuffer()).then(arrayBuffer => {
             WebAssembly.instantiate(arrayBuffer, imports).then(resultObject => {
 
                 this.wasmModule = resultObject.instance.exports;
                 this.isInitiated = true;
 
-            })
+            });
         });
     }
 
-    filterSignal(data: Float32Array, signal: Signal): Float32Array {
-
-        let result: Float32Array = data;
-
-        signal.filters.forEach(filter => {
-            result = this.filter(result, signal.samplingRate, filter.type, filter.cutoffFreq);
-        })
-
-        return result;
-    }
-
-    private filter(data: Float32Array, samplingRate: number, filterType: FilterType, cutoffFrequency: Array<number>): Float32Array {
+    protected filter(data: Float32Array, coeffs: { input: Float32Array, output: Float32Array }): Float32Array {
 
         if (!this.isInitiated) {
             throw Error("The Service has not yes been initiated");
         }
-
-        const coeffs = this.getCoeffs(samplingRate, filterType, cutoffFrequency);
 
         const wasmOutputCoeffOffset = 0;
         const wasmOutputCoeff = new Float32Array(this.wasmBuffer, wasmOutputCoeffOffset, coeffs.output.length);
@@ -78,7 +62,6 @@ export class WebAssemblyFilterService implements FilterService {
         const wasmInputCoeffOffset = wasmOutputCoeff.length * 4;
         const wasmInputCoeff = new Float32Array(this.wasmBuffer, wasmInputCoeffOffset, coeffs.input.length);
         wasmInputCoeff.set(coeffs.input);
-
 
         const wasmSourceArrayOffset = wasmInputCoeffOffset + wasmInputCoeff.length * 4;
         const wasmSourceArray = new Float32Array(this.wasmBuffer, wasmSourceArrayOffset, data.length);
@@ -94,25 +77,10 @@ export class WebAssemblyFilterService implements FilterService {
             coeffs.input.length,
             data.length,
             wasmSourceArrayOffset,
-            wasmResultArrayOffset
+            wasmResultArrayOffset,
         );
 
         // TODO : See how we can avoid that copy
-        return new Float32Array(wasmResultArray); //  we do that because the buffer will be reused 
+        return new Float32Array(wasmResultArray); //  we do that because the buffer will be reused
     }
-
-    // TODO : returns reals coeffs : 
-    getCoeffs(samplingRate: number, filterType: FilterType, cutoffFrequency: Array<number>): { input: Float32Array, output: Float32Array } {
-        return {
-            input: new Float32Array([1.0, -0.7215530376607511, 0.2651579179333694]),
-            output: new Float32Array([0.13590122006815455, 0.2718024401363091, 0.13590122006815455])
-        };
-    }
-}
-
-
-export enum FilterType {
-    Lowpass,
-    Highpass,
-    Notch
 }

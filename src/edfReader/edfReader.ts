@@ -1,12 +1,12 @@
-import { PromiseFileReader } from './PromiseFileReader';
-import { FileParser } from './fileParser';
+import { PromiseFileReader } from "./PromiseFileReader";
+import { FileParser } from "./fileParser";
 
 export class EDFFile {
 
     private constructor(
         public readonly header: EDFHeader,
         public readonly channels: Array<EDFChannel> = [],
-        private file: File
+        private file: File,
     ) { }
 
     public static open(file: File): Promise<EDFFile> {
@@ -16,24 +16,23 @@ export class EDFFile {
             .then(rawHeader => {
                 const edfHeader = new EDFHeader(rawHeader);
 
-                // we read the channelHeaders 
+                // we read the channelHeaders
 
                 return PromiseFileReader.open(file.slice(256, 256 + edfHeader.numberOfSignals * 256)).then(raw => {
 
                     const channelHeaderList = EDFChannel.readChannelList(raw, edfHeader.numberOfSignals);
 
                     return new EDFFile(edfHeader, channelHeaderList, file);
-                })
+                });
             });
     }
-
 
     /**
      * Get a window of points
      * @param startTime  : in mS
      * @param duration : is mS
      */
-    public getWindow(startTime: number, duration: number): Promise<Array<Array<number>>> {
+    public getWindow(startTime: number, duration: number): Promise<Array<Float32Array>> {
 
         return new Promise((resolve, reject) => {
 
@@ -41,9 +40,9 @@ export class EDFFile {
 
             if (this.checkBounds(startTime, duration)) {
                 reject("Window out of bounds");
-            };
+            }
 
-            // calculate the corresponding blocks to get 
+            // calculate the corresponding blocks to get
 
             const firstBlockStartTime = (startTime - startTime % this.header.blockDuration);
 
@@ -64,11 +63,9 @@ export class EDFFile {
 
                 const raw: ArrayBuffer = <ArrayBuffer>fileReader.result;
 
-                console.log("file size : " + raw.byteLength);
-
                 const samples = new Int16Array(raw);
 
-                const result : Array<Array<number>> = this.channels.map(channel => []);
+                const result: Array<Array<number>> = this.channels.map(channel => []);
 
                 let index = 0;
 
@@ -76,10 +73,10 @@ export class EDFFile {
                 for (let i = 0; i < numberOfBlocksToGet; i++) {
                     this.channels.forEach((channel, j) => {
                         for (let k = 0; k < channel.numberOfSamplesInDataRecord; k++) {
-                            result[j].push(samples[index]);
+                            result[j].push(samples[index] * channel.scaleFactor);
                             index++;
                         }
-                    })
+                    });
                 }
 
                 // cut before and after
@@ -95,18 +92,18 @@ export class EDFFile {
 
                 });
 
-                resolve(result);
-            }
+                resolve(result.map(channelData => new Float32Array(channelData)));
+            };
 
             fileReader.readAsArrayBuffer(this.file.slice(offsetInFile, lastOffsetInFile));
         });
     }
 
-    checkBounds(startTime: number, duration: number): boolean {
+    private checkBounds(startTime: number, duration: number): boolean {
         return false;
     }
 
-    getSizeOfDataBlock() {
+    private getSizeOfDataBlock() {
         let size = 0;
 
         this.channels.forEach(channel => {
@@ -119,18 +116,18 @@ export class EDFFile {
 
 export class EDFHeader {
 
-    readonly fileVersion: string; // 8 ascii
-    readonly localPatientIdentification: string; // 80 ascii
-    readonly localRecordingIdentification: string; // 80 ascii
-    readonly startDate: string; // 8 ascii
-    readonly startTime: string; // 8 ascii
+    public readonly fileVersion: string; // 8 ascii
+    public readonly localPatientIdentification: string; // 80 ascii
+    public readonly localRecordingIdentification: string; // 80 ascii
+    public readonly startDate: string; // 8 ascii
+    public readonly startTime: string; // 8 ascii
 
-    readonly recordStartTime: number;
+    public readonly recordStartTime: number;
 
-    readonly byteSizeHeader: number; // 8 ascii
-    readonly numberOfBlocks: number; // 8 ascii
-    readonly blockDuration: number; // 8 ascii
-    readonly numberOfSignals: number; // 4 ascii
+    public readonly byteSizeHeader: number; // 8 ascii
+    public readonly numberOfBlocks: number; // 8 ascii
+    public readonly blockDuration: number; // 8 ascii
+    public readonly numberOfSignals: number; // 4 ascii
 
     constructor(raw: ArrayBuffer) {
 
@@ -142,9 +139,9 @@ export class EDFHeader {
         this.startDate = fileParser.readString(8);
         this.startTime = fileParser.readString(8);
 
-        if (this.startDate != "" && this.startTime != "") {
-            const splittedDate: Array<number> = this.startDate.split(".").map(str => parseInt(str));
-            const splittedTime: Array<number> = this.startTime.split(".").map(str => parseInt(str));
+        if (this.startDate !== "" && this.startTime !== "") {
+            const splittedDate: Array<number> = this.startDate.split(".").map(str => parseInt(str, 10));
+            const splittedTime: Array<number> = this.startTime.split(".").map(str => parseInt(str, 10));
 
             this.recordStartTime = Date.UTC(
                 splittedDate[2],
@@ -152,10 +149,9 @@ export class EDFHeader {
                 splittedDate[0],
                 splittedTime[0],
                 splittedTime[1],
-                splittedTime[2]
-            )
-        }
-        else {
+                splittedTime[2],
+            );
+        } else {
             this.recordStartTime = 0;
         }
 
@@ -175,19 +171,18 @@ export class EDFChannel {
         public readonly label: string, // 16 ascii
         public readonly transducterType: string, // 80 ascii
         public readonly physicalDimension: string, // 8 ascii
-        public readonly physicalMinimum: number,// 8 ascii
+        public readonly physicalMinimum: number, // 8 ascii
         public readonly physicalMaximum: number, // 8 ascii
-        public readonly digitalMinimum: number, // 8 ascii 
+        public readonly digitalMinimum: number, // 8 ascii
         public readonly digitalMaximum: number, // 8 ascii
         public readonly prefiltering: string, // 80 ascii
-        public readonly numberOfSamplesInDataRecord: number // 8 ascii
+        public readonly numberOfSamplesInDataRecord: number, // 8 ascii
     ) {
         this.scaleFactor = (physicalMaximum - physicalMinimum) / (digitalMaximum - digitalMinimum);
     }
 
-
-    static readChannelList(raw: ArrayBuffer, numberOfChannels: number): Array<EDFChannel> {
-        // parse channels 
+    public static readChannelList(raw: ArrayBuffer, numberOfChannels: number): Array<EDFChannel> {
+        // parse channels
 
         const fileParser = new FileParser(raw);
 
@@ -214,8 +209,8 @@ export class EDFChannel {
                 digitalMinimumList[i],
                 digitalMaximumList[i],
                 prefilteringList[i],
-                numberOfSampleList[i]
-            ))
+                numberOfSampleList[i],
+            ));
         }
 
         return channels;

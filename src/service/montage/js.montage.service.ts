@@ -1,32 +1,32 @@
-import { Montage, Operation, ConstantOperation, AddOperation, MinusOperation } from './../../model/montage';
-import { Signal } from "../../model/montage";
+import { SignalData } from "../signalTransormer";
+import { Montage, Operation, ConstantOperation, AddOperation, MinusOperation } from "./../../model/montage";
 
 export interface MontageService {
-    applyMontage(rawData: Array<Float32Array>, montage: Montage): Array<{ data: Float32Array, meta: Signal }>
+    applyMontage(rawData: Array<Float32Array>, montage: Montage): Array<SignalData>;
 }
 
-export class JsMontageService implements MontageService {
+export default class JsMontageService implements MontageService {
 
-    applyMontage(rawData: Array<Float32Array>, montage: Montage): Array<{ data: Float32Array; meta: Signal; }> {
+    public applyMontage(rawData: Array<Float32Array>, montage: Montage): Array<SignalData> {
+        console.debug("Apply Montage");
         return montage.channels.map(channel => {
             return {
                 data: this.recursion(rawData, channel.operation),
                 meta: channel
-            }
+            };
 
-        })
+        });
     }
 
-    recursion(data: Array<Float32Array>, operation: Operation): Float32Array {
+    private recursion(data: Array<Float32Array>, operation: Operation): Float32Array {
         if (operation instanceof ConstantOperation) {
             return data[operation.idChannel].map(value => value * operation.gain);
-        }
-        else if (operation instanceof MinusOperation || operation instanceof AddOperation) {
+        } else if (operation instanceof MinusOperation || operation instanceof AddOperation) {
 
             const dataCh1: Float32Array = this.recursion(data, operation.ch1);
             const dataCh2: Float32Array = this.recursion(data, operation.ch2);
 
-            if (dataCh1.length != dataCh2.length) {
+            if (dataCh1.length !== dataCh2.length) {
                 throw Error("Wrong Operation " + operation);
             }
 

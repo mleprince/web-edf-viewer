@@ -6,13 +6,13 @@ export class FileParser {
     constructor(private rawData: ArrayBuffer) { }
 
     public readString(stringLength: number): string {
-        let rawValue: ArrayBuffer = this.rawData.slice(this.offset, this.offset + stringLength);
+        const rawValue: ArrayBuffer = this.rawData.slice(this.offset, this.offset + stringLength);
         this.offset += stringLength;
         return new TextDecoder("utf-8").decode(rawValue);
     }
 
     public readInteger(stringLength: number): number {
-        return parseInt(this.readString(stringLength));
+        return parseInt(this.readString(stringLength), 10);
     }
 
     public moveOffset(moveOffset: number) {
@@ -30,6 +30,6 @@ export class FileParser {
     }
 
     public readNumberList(listLength: number, stringUnitLength: number): Array<number> {
-        return this.readStringList(listLength, stringUnitLength).map(str => parseInt(str));
+        return this.readStringList(listLength, stringUnitLength).map(str => parseInt(str, 10));
     }
 }

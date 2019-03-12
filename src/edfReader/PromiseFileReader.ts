@@ -12,9 +12,9 @@ export class PromiseFileReader {
                 const raw: ArrayBuffer = <ArrayBuffer>fileReader.result;
                 console.debug("FileReader : file size : " + raw.byteLength);
                 resolve(raw);
-            }
+            };
 
             fileReader.readAsArrayBuffer(file);
-        })
+        });
     }
 }
