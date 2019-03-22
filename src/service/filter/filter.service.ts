@@ -1,6 +1,8 @@
 import { FilterType } from "../../model/montage";
 import { SignalData } from "../signalTransormer";
 
+import Fili from "fili";
+
 export default abstract class FilterService {
 
     protected abstract filter(data: Float32Array, coeffs: { input: Float32Array, output: Float32Array }): Float32Array;
@@ -11,10 +13,41 @@ export default abstract class FilterService {
         filterType: FilterType,
         cutoffFrequency: Array<number>,
     ): { input: Float32Array, output: Float32Array } {
-        return {
-            input: new Float32Array([1.0, -0.7215530376607511, 0.2651579179333694]),
-            output: new Float32Array([0.13590122006815455, 0.2718024401363091, 0.13590122006815455]),
+
+        const iirCalculator: any = new Fili.CalcCascades();
+
+        const cut = cutoffFrequency.length === 1 ? cutoffFrequency[0] : (cutoffFrequency[1] + cutoffFrequency[0]) / 2;
+
+        const options = {
+            order: 1, // cascade 3 biquad filters (max: 12)
+            characteristic: "butterworth",
+            Fs: samplingRate, // sampling frequency
+            Fc: cut, // cutoff frequency / center frequency for bandpass, bandstop, peak
+            BW: cutoffFrequency.length === 2 ? cutoffFrequency[1] - cutoffFrequency[0] : 1,
+            // bandwidth only for bandstop and bandpass filters - optional
+            gain: 0, // gain for peak, lowshelf and highshelf
+            preGain: false // adds one constant multiplication for highpass and lowpass
+            // k = (1 + cos(omega)) * 0.5 / k = 1 with preGain == false
         };
+
+        let iirFilterCoeffs: any;
+
+        if (filterType === FilterType.Highpass) {
+            iirFilterCoeffs = iirCalculator.highpass(options);
+        } else if (filterType === FilterType.Lowpass) {
+            iirFilterCoeffs = iirCalculator.lowpass(options);
+        } else {
+            // notch
+            iirFilterCoeffs = iirCalculator.bandstop(options);
+        }
+
+        const filters = {
+            output: new Float32Array([1]
+                .concat(iirFilterCoeffs[0].a.map((value: number) => value / iirFilterCoeffs[0].a0))),
+            input: new Float32Array(iirFilterCoeffs[0].b.map((value: number) => value / iirFilterCoeffs[0].a0)),
+        };
+
+        return filters;
     }
 
     public filterSignal(signalData: SignalData): SignalData {

@@ -6,13 +6,14 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "asbuild:untouched": "asc assembly/filter.ts -b build/untouched.wasm -t build/untouched.wat --importMemory --sourceMap --validate --debug",
-    "asbuild:optimized": "asc assembly/filter.ts -b build/optimized.wasm -t build/optimized.wat --importMemory --sourceMap --validate --optimize",
+    "asbuild:untouched": "asc assembly/filter.ts -b public/wasm/untouched.wasm -t public/wasm/untouched.wat --importMemory --sourceMap --validate --debug",
+    "asbuild:optimized": "asc assembly/filter.ts -b public/wasm/optimized.wasm -t public/wasm/optimized.wat --importMemory --sourceMap --validate --optimize",
     "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized"
   },
   "dependencies": {
     "bootstrap": "^4.3.1",
     "dygraphs": "^2.1.0",
+    "fili": "^2.0.3",
     "vue": "^2.6.6",
     "vue-class-component": "^6.0.0",
     "vue-property-decorator": "^7.3.0",

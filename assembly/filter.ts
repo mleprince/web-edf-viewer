@@ -1,14 +1,26 @@
 import "allocator/arena";
 
 export function filter(
-    outputOffset: i32,
+    outputCoeffOffset: i32,
     outputCoeffCount: i32,
-    inputOffset: i32,
+    inputCoeffOffset: i32,
     inputCoeffCount: i32,
     arrayLength: i32,
     sourceArrayOffset: i32,
     destinationArrayOffset: i32
 ): void {
+
+
+    let outputCoeffs: Float32Array = new Float32Array(inputCoeffCount);
+    let inputCoeffs: Float32Array = new Float32Array(outputCoeffCount);
+
+    for (let i = 0; i < outputCoeffCount; i++) {
+        outputCoeffs[i] = load<f32>(outputCoeffOffset + 4 * i);
+    }
+
+    for (let i = 0; i < inputCoeffCount; i++) {
+        inputCoeffs[i] = load<f32>(inputCoeffOffset + 4 * i);
+    }
 
     inputCoeffCount = inputCoeffCount - 1;
     outputCoeffCount = outputCoeffCount - 1;
@@ -21,17 +33,17 @@ export function filter(
 
     for (let i: i32 = 0; i < arrayLength; i++) {
 
-        let inputPoint: f32 = load<f32>((sourceArrayOffset + 4 * i));
+        let inputPoint: f32 = load<f32>(sourceArrayOffset + 4 * i);
 
-        let acc: f32 = load<f32>(inputOffset) * inputPoint;
+        let acc: f32 = inputCoeffs[0] * inputPoint;
 
         for (let j: i32 = 1; j <= inputCoeffCount; j++) {
             let p: i32 = (inputIdx + inputCoeffCount - j) % inputCoeffCount;
-            acc += load<f32>(inputOffset + 4 * j) * input[p]
+            acc += inputCoeffs[j] * input[p]
         }
         for (let j: i32 = 1; j <= outputCoeffCount; j++) {
             let p: i32 = (outputIdx + outputCoeffCount - j) % outputCoeffCount;
-            acc -= load<f32>(outputOffset + 4 * i) * output[p];
+            acc -= outputCoeffs[j] * output[p];
         }
         if (inputCoeffCount > 0) {
             input[inputIdx] = inputPoint;
@@ -46,11 +58,4 @@ export function filter(
     }
 
     memory.reset();
-}
-
-
-// Imported debug functions  
-declare namespace console {
-    @external("console", "logInt") function logInt(idx: u32, val: u32): void;
-    @external("console", "logFloat") function logFloat(idx: u32, val: f32): void;
 }

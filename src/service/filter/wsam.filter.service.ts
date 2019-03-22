@@ -14,7 +14,7 @@ export default class WebAssemblyFilterService extends FilterService {
         // 640kb => I think it is enough
         //  TODO : optim memory consumption
         const memory = new WebAssembly.Memory({
-            initial: 100,
+            initial: 10,
         });
 
         this.wasmBuffer = memory.buffer;
@@ -39,14 +39,13 @@ export default class WebAssemblyFilterService extends FilterService {
             },
         };
 
-        fetch("./build/optimized.wasm").then(result => result.arrayBuffer()).then(arrayBuffer => {
-            WebAssembly.instantiate(arrayBuffer, imports).then(resultObject => {
+        (<any>WebAssembly).instantiateStreaming(fetch("wasm/optimized.wasm"), imports).then((resultObject: any) => {
 
-                this.wasmModule = resultObject.instance.exports;
-                this.isInitiated = true;
+            this.wasmModule = resultObject.instance.exports;
+            this.isInitiated = true;
 
-            });
         });
+
     }
 
     protected filter(data: Float32Array, coeffs: { input: Float32Array, output: Float32Array }): Float32Array {

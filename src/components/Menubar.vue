@@ -74,6 +74,7 @@ export default class Menubar extends Vue {
     return this.store.isFileLoaded;
   }
 
+  // TOTO : delete focus on slect
   private goToLeft() {
     this.store.goToLeft();
   }

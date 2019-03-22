@@ -61,6 +61,10 @@ export class GeneralStore extends VuexModule {
   @action()
   public async loadEdfFile(file: File) {
     return EDFFile.open(file).then(edf => {
+
+      Object.defineProperty(edf, "channels", { configurable: false });
+      Object.defineProperty(edf, "header", { configurable: false });
+
       this.storeEdfFile(edf);
       this.applyMontage(Montage.getDefaultMontage(edf));
     });

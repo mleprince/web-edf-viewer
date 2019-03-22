@@ -9,14 +9,15 @@ export class Montage {
 
     public static getDefaultMontage(edfFile: EDFFile): Montage {
 
-        const signalList: Array<Signal> = edfFile.channels.map((edfChannel, i) => {
-            const samplingRate = 1000 * edfChannel.numberOfSamplesInDataRecord / edfFile.header.blockDuration;
+        const signalList: Array<Signal> = edfFile.channels
+            .map((edfChannel, i) => {
+                const samplingRate = 1000 * edfChannel.numberOfSamplesInDataRecord / edfFile.header.blockDuration;
 
-            const signal = new Signal(edfChannel.label, new ConstantOperation(i, -1), samplingRate);
-            //   signal.filters.push({ type: FilterType.Lowpass, cutoffFreq: [40] });
-            //  signal.filters.push({ type: FilterType.Lowpass, cutoffFreq: [40] });
-            return signal;
-        });
+                const signal = new Signal(edfChannel.label, new ConstantOperation(i, -1), samplingRate);
+                signal.filters.push({ type: FilterType.Lowpass, cutoffFreq: [40] });
+                signal.filters.push({ type: FilterType.Highpass, cutoffFreq: [0.5] });
+                return signal;
+            });// }).filter(channel => channel.label.includes("sine 50 Hz") || channel.label.includes("sine 1 Hz"));
 
         return new Montage("default", signalList);
     }
