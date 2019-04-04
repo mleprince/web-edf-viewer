@@ -1,5 +1,5 @@
 import { SignalData } from "../signalTransormer";
-import { Montage, Operation, ConstantOperation, AddOperation, MinusOperation } from "./../../model/montage";
+import { Montage, Operation, ConstantOperation, CompositionOperation, MinusOperation } from "./../../model/montage";
 
 export interface MontageService {
     applyMontage(rawData: Array<Float32Array>, montage: Montage): Array<SignalData>;
@@ -20,8 +20,8 @@ export default class JsMontageService implements MontageService {
 
     private recursion(data: Array<Float32Array>, operation: Operation): Float32Array {
         if (operation instanceof ConstantOperation) {
-            return data[operation.idChannel].map(value => value * operation.gain);
-        } else if (operation instanceof MinusOperation || operation instanceof AddOperation) {
+            return data[operation.signal_id].map(value => value * operation.gain);
+        } else if (operation instanceof MinusOperation || operation instanceof CompositionOperation) {
 
             const dataCh1: Float32Array = this.recursion(data, operation.ch1);
             const dataCh2: Float32Array = this.recursion(data, operation.ch2);

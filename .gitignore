@@ -16,8 +16,13 @@ yarn-error.log*
 # Editor directories and files
 .idea
 .vscode
-*.suo
+.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw*
+
+**/.node_modules
+
+edf-viewer-worker/target
+edf-viewer-worker/pkg

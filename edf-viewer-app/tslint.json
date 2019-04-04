@@ -18,6 +18,8 @@
     "no-console": false,
     "arrow-parens": false,
     "interface-name": false,
+    "no-reference": false,
+    "variable-name":false,
     "member-ordering": [
       true,
       {

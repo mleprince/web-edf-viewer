@@ -14,7 +14,8 @@
     "types": [
       "webpack-env",
       "webassembly-js-api",
-      "dygraphs"
+      "dygraphs",
+      "./public/edf_worker_bg.d.ts"
     ],
     "paths": {
       "@/*": [

@@ -18,7 +18,9 @@ import JsFilterService from "../service/filter/js.filter.service";
 import JsMontageService from "../service/montage/js.montage.service";
 import { GeneralStore } from "@/store";
 import Dygraph from "dygraphs";
-import { Signal } from "@/model/montage";
+import { Signal, Montage } from "@/model/montage";
+import * as worker from "../../public/assembly/edf_viewer_worker";
+import * as worker2 from "@/Worker";
 
 @Component
 export default class Viewer extends Vue {

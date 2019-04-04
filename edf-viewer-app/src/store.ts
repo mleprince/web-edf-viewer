@@ -4,6 +4,7 @@ import Vuex, { StoreOptions } from "vuex";
 import { Montage } from "./model/montage";
 import createLogger from "vuex/dist/logger";
 import { VuexModule, mutation, action, getter, Module } from "vuex-class-component";
+import * as worker from "../public/assembly/edf_viewer_worker";
 
 Vue.use(Vuex);
 
@@ -62,7 +63,11 @@ export class GeneralStore extends VuexModule {
   public async loadEdfFile(file: File) {
     return EDFFile.open(file).then(edf => {
       this.storeEdfFile(edf);
-      this.applyMontage(Montage.getDefaultMontage(edf));
+
+      const montage = Montage.getDefaultMontage(edf);
+
+      worker.compute_window(montage, edf, worker.alloc(100), 10, 10);
+      this.applyMontage(montage);
     });
   }
 }

@@ -10,7 +10,7 @@ export class Montage {
     public static getDefaultMontage(edfFile: EDFFile): Montage {
 
         const signalList: Array<Signal> = edfFile.channels.map((edfChannel, i) => {
-            const samplingRate = 1000 * edfChannel.numberOfSamplesInDataRecord / edfFile.header.blockDuration;
+            const samplingRate = 1000 * edfChannel.number_of_samples_in_data_record / edfFile.header.block_duration;
 
             const signal = new Signal(edfChannel.label, new ConstantOperation(i, -1), samplingRate);
             //   signal.filters.push({ type: FilterType.Lowpass, cutoffFreq: [40] });
@@ -46,20 +46,23 @@ export class Signal {
 }
 
 export class Operation {
-    constructor(public readonly gain: number) { }
+    constructor(
+        public readonly gain: number,
+        public readonly type: "Constant" | "Composition"
+    ) { }
 
 }
 
 export class ConstantOperation extends Operation {
-    constructor(public readonly idChannel: number, gain: number) {
-        super(gain);
+    constructor(public readonly signal_id: number, gain: number) {
+        super(gain, "Constant");
     }
 }
 
-export class AddOperation extends Operation {
+export class CompositionOperation extends Operation {
     constructor(public readonly ch1: Operation, public readonly ch2: Operation, gain: number) {
-        super(gain);
+        super(gain, "Composition");
     }
 }
 
-export class MinusOperation extends AddOperation { }
+export class MinusOperation extends CompositionOperation { }
