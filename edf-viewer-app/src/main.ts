@@ -7,10 +7,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 import { initWorker } from "./Worker";
 
-initWorker().then(() => {
-
-
-  
+initWorker().then(_ => {
 
   Vue.config.productionTip = false;
 

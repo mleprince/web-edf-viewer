@@ -1,10 +1,6 @@
 import { PromiseFileReader } from "./PromiseFileReader";
 import { FileParser } from "./fileParser";
 
-
-
-
-
 export class EDFFile {
 
     private constructor(

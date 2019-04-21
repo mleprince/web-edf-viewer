@@ -61,14 +61,20 @@ export class GeneralStore extends VuexModule {
 
   @action()
   public async loadEdfFile(file: File) {
-    return EDFFile.open(file).then(edf => {
-      this.storeEdfFile(edf);
 
-      const montage = Montage.getDefaultMontage(edf);
+    worker.get_header(file).then(result => {
+      console.log(result);
 
-      worker.compute_window(montage, edf, worker.alloc(100), 10, 10);
-      this.applyMontage(montage);
+      worker.read_window(0, 10 * 1000).then(result2 => console.log(result2));
     });
+
+    // return EDFFile.open(file).then(edf => {
+    //   this.storeEdfFile(edf);
+
+    //   const montage = Montage.getDefaultMontage(edf);
+
+    //   this.applyMontage(montage);
+    // });
   }
 }
 

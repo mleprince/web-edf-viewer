@@ -45,6 +45,8 @@ export class WasmArray {
 export async function initWorker(): Promise<typeof worker> {
     return (<any>worker).default("./assembly/edf_viewer_worker_bg.wasm").then((result: any) => {
         workerMemory = result.memory;
+
+        worker.init_error_panic();
         return worker;
     });
 }

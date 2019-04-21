@@ -15,12 +15,11 @@ default = ["console_error_panic_hook"]
 [dependencies]
 cfg-if = "0.1.2"
 js-sys = "0.3.16"
-fixedbitset = "0.1.9"
 serde = "1.0.89"
 serde_derive = "1.0.89"
-chrono = "0.4.6"
-edf-reader = "0.2.0"
-
+edf-reader = "0.6.0"
+futures = "0.1"
+wasm-bindgen-futures = "0.3.19"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -35,17 +34,19 @@ console_error_panic_hook = { version = "0.1.1", optional = true }
 # Unfortunately, `wee_alloc` requires nightly Rust when targeting wasm for now.
 wee_alloc = { version = "0.4.2", optional = true }
 
-
-
 [dependencies.wasm-bindgen]
-version = "^0.2"
+version = "0.2.42"
 features = ["serde-serialize"]
 
 [dependencies.web-sys]
-version = "0.3"
+version = "0.3.19"
 features = [
   "console",
+  "FileReader",
+  "File",
+  "Blob"
 ]
+
 
 
 [dev-dependencies]
@@ -55,3 +56,6 @@ predicates = "1.0"
 # [profile.release]
 # # Tell `rustc` to optimize for small code size.
 # opt-level = "s"
+
+[profile.release]
+debug = true

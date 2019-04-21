@@ -1,29 +1,53 @@
 #![allow(unused)]
 
-mod edf_reader;
 mod model;
 mod utils;
 
-extern crate fixedbitset;
+mod js_async_reader;
+
+extern crate edf_reader;
 extern crate js_sys;
 extern crate wasm_bindgen;
+extern crate wasm_bindgen_futures;
+extern crate web_sys;
 
 #[macro_use]
 extern crate serde_derive;
 
-extern crate web_sys;
-
-use fixedbitset::FixedBitSet;
-
 use model::*;
 
-use edf_reader::*;
-
+use std::any::Any;
+use std::io::{Error, ErrorKind};
 use std::mem;
 use std::os::raw::c_void;
 use std::slice;
 
+use edf_reader::file_reader::AsyncFileReader;
+
+use js_sys::Array;
+use js_sys::ArrayBuffer;
+use js_sys::Float32Array;
+use js_sys::Function;
+use js_sys::Promise;
+use js_sys::Uint8Array;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use wasm_bindgen::JsValue;
+use wasm_bindgen_futures::{future_to_promise, spawn_local, JsFuture};
 use web_sys::console;
+use web_sys::Blob;
+use web_sys::File;
+use web_sys::FileReader;
+
+use edf_reader::async_reader::*;
+
+use std::cell::RefCell;
+
+use std::sync::Arc;
+
+use js_async_reader::*;
+
+use futures::{Async, Future, Poll};
 
 // use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
@@ -41,6 +65,55 @@ cfg_if::cfg_if! {
 macro_rules! log {
     ( $( $t:tt )* ) => {
         web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
+
+#[wasm_bindgen]
+pub fn init_error_panic() {
+    console_error_panic_hook::set_once();
+}
+
+#[wasm_bindgen]
+pub fn get_header(file: File) -> js_sys::Promise {
+    let file_reader = JsAsyncReader::new(file);
+
+    let future = AsyncEDFReader::init_with_file_reader(file_reader)
+        .map(|edf_reader: AsyncEDFReader<JsAsyncReader>| {
+            let js_value = JsValue::from_serde(&edf_reader.edf_header).unwrap();
+            unsafe {
+                EDF_READER = Some(edf_reader);
+            }
+            js_value
+        })
+        .map_err(|error: Error| JsValue::from(js_sys::Error::new(&format!("{:?}", error))));
+
+    future_to_promise(future)
+}
+
+#[wasm_bindgen]
+pub fn read_window(start_time: u32, duration: u32) -> js_sys::Promise {
+    unsafe {
+        match &EDF_READER {
+            Some(edf_reader) => future_to_promise(
+                edf_reader
+                    .read_data_window(start_time as u64, duration as u64)
+                    .map(|data: Vec<Vec<f32>>| {
+                        let result = Array::new();
+
+                        for channel_data in data {
+                            result.push(&JsValue::from(Float32Array::view(&channel_data[..])));
+                        }
+
+                        JsValue::from(result)
+                    })
+                    .map_err(|error: Error| {
+                        JsValue::from(js_sys::Error::new(&format!("{:?}", error)))
+                    }),
+            ),
+            None => js_sys::Promise::reject(&JsValue::from(js_sys::Error::new(&String::from(
+                "Reader has not been initialised",
+            )))),
+        }
     }
 }
 
@@ -67,9 +140,8 @@ pub extern "C" fn dealloc(ptr: *mut c_void, cap: usize) {
 /// Statics
 ///
 
-static mut EDF_FILE: Option<EDFFile> = None;
-
 static mut CURRENT_MONTAGE: Option<Montage> = None;
+static mut EDF_READER: Option<AsyncEDFReader<JsAsyncReader>> = None;
 
 #[wasm_bindgen]
 pub fn compute(result_pointer: *mut u8, width: usize, height: usize) {
@@ -84,34 +156,12 @@ pub fn compute(result_pointer: *mut u8, width: usize, height: usize) {
 }
 
 #[wasm_bindgen]
-pub fn compute_window(
-    edf_file_serde: &JsValue,
-    window_data: *mut u8,
-    window_width: usize,
-    window_height: usize,
-) {
-    let edf_file: EDFFile = edf_file_serde.into_serde().unwrap();
-
-    log!("{:?}", edf_file);
-}
-
-#[wasm_bindgen]
 pub fn set_current_montage(val: &JsValue) {
     let example: Montage = val.into_serde().unwrap();
 
     unsafe {
         log!("new current montage : {:?}", &example);
         CURRENT_MONTAGE = Some(example);
-    }
-}
-
-#[wasm_bindgen]
-pub fn set_edf_file(val: &JsValue) {
-    let example: EDFFile = val.into_serde().unwrap();
-
-    unsafe {
-        log!("new edf file : {:?}", &example);
-        EDF_FILE = Some(example);
     }
 }
 
