@@ -20,6 +20,9 @@ serde_derive = "1.0.89"
 edf-reader = "0.6.0"
 futures = "0.1"
 wasm-bindgen-futures = "0.3.19"
+biquad = "0.2.0"
+
+
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires

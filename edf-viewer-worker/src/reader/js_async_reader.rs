@@ -8,21 +8,20 @@ use std::io::{Error, ErrorKind};
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
+use wasm_bindgen::UnwrapThrowExt;
 use web_sys::Blob;
 use web_sys::File;
 use web_sys::FileReader;
 
-use std::pin::Pin;
-
-pub struct JsAsyncReader {
-    file: File,
-}
-
-// A macro to provide `println!(..)`-style syntax for `console.log` logging.
+// A macro to provide `println!(..)`-style syntax for `console.debug` logging.
 macro_rules! debug {
     ( $( $t:tt )* ) => {
         web_sys::console::debug_1(&format!( $( $t )* ).into());
     }
+}
+
+pub struct JsAsyncReader {
+    file: File,
 }
 
 impl JsAsyncReader {
@@ -58,11 +57,11 @@ impl FileFuture {
     fn new(file: &File, offset: usize, length: usize) -> Result<FileFuture, Error> {
         debug!("new FileReader : {}", file.name());
 
-        let file_reader = FileReader::new().unwrap();
+        let file_reader = FileReader::new().unwrap_throw();
 
         let slice: Blob = file
             .slice_with_i32_and_i32(offset as i32, (offset + length) as i32)
-            .unwrap();
+            .unwrap_throw();
 
         if let Err(e) = file_reader.read_as_array_buffer(&slice) {
             return Err(Error::new(ErrorKind::Other, "Failed to start FileReader"));

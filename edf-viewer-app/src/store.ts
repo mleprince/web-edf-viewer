@@ -1,4 +1,4 @@
-import { EDFFile } from "@/edfReader/edfReader";
+import { EDFHeader } from "./edfReader/edfReader";
 import Vue from "vue";
 import Vuex, { StoreOptions } from "vuex";
 import { Montage } from "./model/montage";
@@ -16,7 +16,7 @@ export interface Window {
 @Module()
 export class GeneralStore extends VuexModule {
 
-  @getter public edfFile: EDFFile | null = null;
+  @getter public edfHeader: EDFHeader | null = null;
   @getter public currentResolution: number = 20000;
   @getter public currentStartTime: number = 0;
   @getter public currentMontage: Montage | null = null;
@@ -25,7 +25,7 @@ export class GeneralStore extends VuexModule {
 
   @getter
   get isFileLoaded(): boolean {
-    return this.edfFile !== null;
+    return this.edfHeader !== null;
   }
 
   @mutation
@@ -45,8 +45,8 @@ export class GeneralStore extends VuexModule {
   }
 
   @mutation
-  public storeEdfFile(edfFile: EDFFile) {
-    this.edfFile = edfFile;
+  private applyEdfHeader(edfHeader: EDFHeader) {
+    this.edfHeader = edfHeader;
   }
 
   @mutation
@@ -62,19 +62,15 @@ export class GeneralStore extends VuexModule {
   @action()
   public async loadEdfFile(file: File) {
 
-    worker.get_header(file).then(result => {
-      console.log(result);
+    worker.init_reader(file).then((edfHeader: EDFHeader) => {
+      this.applyEdfHeader(edfHeader);
+      const montage = Montage.getDefaultMontage(edfHeader);
+      console.log(montage);
+      worker.set_current_montage(montage.toRustStruct());
 
-      worker.read_window(0, 10 * 1000).then(result2 => console.log(result2));
+      worker.read_window(0, 10000).then((result: Array<Float32Array>) => console.log(result));
+
     });
-
-    // return EDFFile.open(file).then(edf => {
-    //   this.storeEdfFile(edf);
-
-    //   const montage = Montage.getDefaultMontage(edf);
-
-    //   this.applyMontage(montage);
-    // });
   }
 }
 

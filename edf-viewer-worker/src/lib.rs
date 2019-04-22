@@ -1,10 +1,10 @@
 #![allow(unused)]
 
-mod model;
-mod utils;
+mod filter;
+mod montage;
+mod reader;
 
-mod js_async_reader;
-
+extern crate biquad;
 extern crate edf_reader;
 extern crate js_sys;
 extern crate wasm_bindgen;
@@ -14,8 +14,8 @@ extern crate web_sys;
 #[macro_use]
 extern crate serde_derive;
 
-use model::*;
-
+use crate::montage::model::Signal;
+use montage::model::Montage;
 use std::any::Any;
 use std::io::{Error, ErrorKind};
 use std::mem;
@@ -33,6 +33,7 @@ use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
+use wasm_bindgen::UnwrapThrowExt;
 use wasm_bindgen_futures::{future_to_promise, spawn_local, JsFuture};
 use web_sys::console;
 use web_sys::Blob;
@@ -40,16 +41,14 @@ use web_sys::File;
 use web_sys::FileReader;
 
 use edf_reader::async_reader::*;
+use edf_reader::model::*;
 
-use std::cell::RefCell;
+use montage::model::*;
 
-use std::sync::Arc;
-
-use js_async_reader::*;
-
+use futures::future::result;
 use futures::{Async, Future, Poll};
 
-// use cfg_if::cfg_if;
+use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
 
 cfg_if::cfg_if! {
@@ -74,95 +73,49 @@ pub fn init_error_panic() {
 }
 
 #[wasm_bindgen]
-pub fn get_header(file: File) -> js_sys::Promise {
-    let file_reader = JsAsyncReader::new(file);
-
-    let future = AsyncEDFReader::init_with_file_reader(file_reader)
-        .map(|edf_reader: AsyncEDFReader<JsAsyncReader>| {
-            let js_value = JsValue::from_serde(&edf_reader.edf_header).unwrap();
-            unsafe {
-                EDF_READER = Some(edf_reader);
-            }
-            js_value
-        })
-        .map_err(|error: Error| JsValue::from(js_sys::Error::new(&format!("{:?}", error))));
-
-    future_to_promise(future)
+pub fn init_reader(file: File) -> js_sys::Promise {
+    future_to_promise(
+        reader::init(file)
+            .map(|header: EDFHeader| JsValue::from_serde(&header).unwrap_throw())
+            .map_err(|e| to_js_error(e)),
+    )
 }
 
 #[wasm_bindgen]
 pub fn read_window(start_time: u32, duration: u32) -> js_sys::Promise {
-    unsafe {
-        match &EDF_READER {
-            Some(edf_reader) => future_to_promise(
-                edf_reader
-                    .read_data_window(start_time as u64, duration as u64)
-                    .map(|data: Vec<Vec<f32>>| {
-                        let result = Array::new();
-
-                        for channel_data in data {
-                            result.push(&JsValue::from(Float32Array::view(&channel_data[..])));
-                        }
-
-                        JsValue::from(result)
+    future_to_promise(
+        reader::read_window(start_time, duration)
+            .and_then(|data: Vec<Vec<f32>>| result(montage::apply_montage(data, reader::get_header().unwrap_throw())))
+            .map(|data: Vec<(Signal, Vec<f32>)>| {
+                data.iter()
+                    .map(|(signal, signal_data)| {
+                        (signal.clone(), filter::apply_filters(signal_data, &signal))
                     })
-                    .map_err(|error: Error| {
-                        JsValue::from(js_sys::Error::new(&format!("{:?}", error)))
-                    }),
-            ),
-            None => js_sys::Promise::reject(&JsValue::from(js_sys::Error::new(&String::from(
-                "Reader has not been initialised",
-            )))),
-        }
-    }
-}
+                    .collect()
+            })
+            .map(|data: Vec<(Signal, Vec<f32>)>| {
+                let result = Array::new();
 
-// In order to work with the memory we expose (de)allocation methods
-#[no_mangle]
-#[wasm_bindgen]
-pub extern "C" fn alloc(size: usize) -> *mut c_void {
-    utils::set_panic_hook();
-    let mut buf = Vec::with_capacity(size);
-    let ptr = buf.as_mut_ptr();
-    mem::forget(buf);
-    return ptr as *mut c_void;
-}
+                unsafe {
+                    for (signal, signal_data) in data {
+                        result.push(&JsValue::from(Float32Array::view(&signal_data[..])));
+                    }
+                }
 
-#[no_mangle]
-#[wasm_bindgen]
-pub extern "C" fn dealloc(ptr: *mut c_void, cap: usize) {
-    unsafe {
-        let _buf = Vec::from_raw_parts(ptr, 0, cap);
-    }
-}
-
-////////////////////
-/// Statics
-///
-
-static mut CURRENT_MONTAGE: Option<Montage> = None;
-static mut EDF_READER: Option<AsyncEDFReader<JsAsyncReader>> = None;
-
-#[wasm_bindgen]
-pub fn compute(result_pointer: *mut u8, width: usize, height: usize) {
-    let length = width * height;
-
-    let result = unsafe { slice::from_raw_parts_mut(result_pointer, length) };
-
-    let mut j = 0;
-    for i in 0..800000 {
-        result[i] = i as u8;
-    }
+                JsValue::from(result)
+            })
+            .map_err(|e| to_js_error(e)),
+    )
 }
 
 #[wasm_bindgen]
 pub fn set_current_montage(val: &JsValue) {
-    let example: Montage = val.into_serde().unwrap();
+    let montage: Montage = val.into_serde().unwrap_throw();
+    montage::set_current_montage(montage);
+}
 
-    unsafe {
-        log!("new current montage : {:?}", &example);
-        CURRENT_MONTAGE = Some(example);
-    }
+fn to_js_error(error: Error) -> JsValue {
+    JsValue::from(js_sys::Error::new(&format!("{:?}", error)))
 }
 
 pub struct Timer<'a> {

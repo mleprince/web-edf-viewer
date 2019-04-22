@@ -13,9 +13,6 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from "vue-property-decorator";
-import SignalTransformer, { SignalData } from "../service/signalTransormer";
-import JsFilterService from "../service/filter/js.filter.service";
-import JsMontageService from "../service/montage/js.montage.service";
 import { GeneralStore } from "@/store";
 import Dygraph from "dygraphs";
 import { Signal, Montage } from "@/model/montage";
@@ -24,7 +21,6 @@ import * as worker2 from "@/Worker";
 
 @Component
 export default class Viewer extends Vue {
-  private signalTransformer: SignalTransformer;
 
   private store: GeneralStore = GeneralStore.CreateProxy(
     this.$store,
@@ -33,10 +29,6 @@ export default class Viewer extends Vue {
 
   constructor() {
     super();
-    this.signalTransformer = new SignalTransformer(
-      new JsFilterService(),
-      new JsMontageService()
-    );
   }
 
   private mounted() {
@@ -65,92 +57,70 @@ export default class Viewer extends Vue {
 
   // TODO : handle signals with different sampling rate
   private drawChart() {
-    if (this.store.edfFile !== null && this.store.currentMontage !== null) {
-      const montage = this.store.currentMontage;
+    // if (this.store.edfFile !== null && this.store.currentMontage !== null) {
+    //   const montage = this.store.currentMontage;
 
-      this.store.edfFile
-        .getWindow(this.store.currentStartTime, this.store.currentResolution)
-        .then(rawData => {
-          const computedSignal: Array<
-            SignalData
-          > = this.signalTransformer.getFinalSignal(rawData, montage);
+    //   this.store.edfFile
+    //     .getWindow(this.store.currentStartTime, this.store.currentResolution)
+    //     .then(rawData => {
+    //       const computedSignal: Array<
+    //         SignalData
+    //       > = this.signalTransformer.getFinalSignal(rawData, montage);
 
-          const maxNumberOfPoints = this.getMaxNumberOfPoints(computedSignal);
+    //       const maxNumberOfPoints = this.getMaxNumberOfPoints(computedSignal);
 
-          const result: Array<Array<number>> = this.initDataWithTimeline(
-            this.store.currentStartTime,
-            this.store.currentResolution,
-            maxNumberOfPoints,
-            computedSignal.length
-          );
+    //       const result: Array<Array<number>> = this.initDataWithTimeline(
+    //         this.store.currentStartTime,
+    //         this.store.currentResolution,
+    //         maxNumberOfPoints,
+    //         computedSignal.length
+    //       );
 
-          computedSignal.forEach((signalData, i) => {
-            if (signalData.data.length < maxNumberOfPoints) {
-              // special case => we have to upsample
-              for (let j = 0; j < signalData.data.length; j++) {
-                // compute index of the point
-                const timestamp =
-                  this.store.currentStartTime +
-                  j * (1000 / signalData.meta.samplingRate);
+    //       computedSignal.forEach((signalData, i) => {
+    //         if (signalData.data.length < maxNumberOfPoints) {
+    //           // special case => we have to upsample
+    //           for (let j = 0; j < signalData.data.length; j++) {
+    //             // compute index of the point
+    //             const timestamp =
+    //               this.store.currentStartTime +
+    //               j * (1000 / signalData.meta.samplingRate);
 
-                const index = Math.floor(
-                  (j * (1000 / signalData.meta.samplingRate)) /
-                    (this.store.currentResolution / maxNumberOfPoints)
-                );
+    //             const index = Math.floor(
+    //               (j * (1000 / signalData.meta.samplingRate)) /
+    //                 (this.store.currentResolution / maxNumberOfPoints)
+    //             );
 
-                result[index][i + 1] =
-                  signalData.data[j] * this.store.selectedGain + 1000 * i;
-              }
-            } else {
-              for (let j = 0; j < signalData.data.length; j++) {
-                result[j][i + 1] =
-                  signalData.data[j] * this.store.selectedGain + 1000 * i;
-              }
-            }
-          });
+    //             result[index][i + 1] =
+    //               signalData.data[j] * this.store.selectedGain + 1000 * i;
+    //           }
+    //         } else {
+    //           for (let j = 0; j < signalData.data.length; j++) {
+    //             result[j][i + 1] =
+    //               signalData.data[j] * this.store.selectedGain + 1000 * i;
+    //           }
+    //         }
+    //       });
 
-          const graph = new Dygraph("chart", result, {
-            labelsUTC: true,
-            labels: ["time"].concat(
-              computedSignal.map(signalData => signalData.meta.label)
-            ),
-            axes: {
-              y: {
-                ticker: (min, max, pixels, opts, dygraph, vals) => {
-                  return this.getLabels(computedSignal);
-                },
-                axisLabelWidth: 100
-              }
-            },
-            valueRange: [-1000, computedSignal.length * 1000],
-            showLabelsOnHighlight: false
-          });
-        });
-    } else {
-      throw new Error("You must load a file before drawing");
-    }
-  }
-
-  private getLabels(
-    rawData: Array<SignalData>
-  ): Array<{ v: number; label: string }> {
-    return rawData.map((signalData, i) => {
-      return {
-        v: i * 1000,
-        label: signalData.meta.label
-      };
-    });
-  }
-
-  private getMaxNumberOfPoints(rawData: Array<SignalData>) {
-    let max = 0;
-
-    rawData.forEach(signalData => {
-      if (signalData.data.length > max) {
-        max = signalData.data.length;
-      }
-    });
-    return max;
+    //       const graph = new Dygraph("chart", result, {
+    //         labelsUTC: true,
+    //         labels: ["time"].concat(
+    //           computedSignal.map(signalData => signalData.meta.label)
+    //         ),
+    //         axes: {
+    //           y: {
+    //             ticker: (min, max, pixels, opts, dygraph, vals) => {
+    //               return this.getLabels(computedSignal);
+    //             },
+    //             axisLabelWidth: 100
+    //           }
+    //         },
+    //         valueRange: [-1000, computedSignal.length * 1000],
+    //         showLabelsOnHighlight: false
+    //       });
+    //     });
+    // } else {
+    //   throw new Error("You must load a file before drawing");
+    // }
   }
 
   private initDataWithTimeline(

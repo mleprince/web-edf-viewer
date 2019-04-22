@@ -1,4 +1,4 @@
-import { EDFFile } from "@/edfReader/edfReader";
+import { EDFHeader } from "@/edfReader/edfReader";
 
 export class Montage {
 
@@ -7,10 +7,10 @@ export class Montage {
         public channels: Array<Signal>
     ) { }
 
-    public static getDefaultMontage(edfFile: EDFFile): Montage {
+    public static getDefaultMontage(edfHeader: EDFHeader): Montage {
 
-        const signalList: Array<Signal> = edfFile.channels.map((edfChannel, i) => {
-            const samplingRate = 1000 * edfChannel.number_of_samples_in_data_record / edfFile.header.block_duration;
+        const signalList: Array<Signal> = edfHeader.channels.map((edfChannel, i) => {
+            const samplingRate = 1000 * edfChannel.number_of_samples_in_data_record / edfHeader.block_duration;
 
             const signal = new Signal(edfChannel.label, new ConstantOperation(i, -1), samplingRate);
             //   signal.filters.push({ type: FilterType.Lowpass, cutoffFreq: [40] });
@@ -20,49 +20,79 @@ export class Montage {
 
         return new Montage("default", signalList);
     }
-}
 
-export enum FilterType {
-    Lowpass,
-    Highpass,
-    Notch
-}
-
-export interface FilterDefinition {
-    type: FilterType;
-    cutoffFreq: Array<number>;
-}
-
-export class Signal {
-
-    public readonly filters: Array<FilterDefinition> = [];
-
-    constructor(
-        public readonly label: string,
-        public readonly operation: Operation,
-        public readonly samplingRate: number
-    ) {
+    public toRustStruct(): any {
+        return {
+            label: this.label,
+            channels: this.channels.map(channel => channel.toRustStruct())
+        };
     }
 }
 
-export class Operation {
+export class Signal {
     constructor(
-        public readonly gain: number,
-        public readonly type: "Constant" | "Composition"
+        public readonly label: string,
+        public readonly operation: Operation,
+        public readonly samplingRate: number,
     ) { }
+
+    public toRustStruct(): any {
+
+        const obj: any = {};
+
+        obj[this.operation.type] = this.operation.getRustStruct();
+
+        return {
+            label: this.label,
+            operation: obj
+        };
+    }
+}
+
+export abstract class Operation {
+    constructor(public readonly type: "Constant" | "Composition") { }
+
+    public abstract getRustStruct(): any;
 
 }
 
 export class ConstantOperation extends Operation {
-    constructor(public readonly signal_id: number, gain: number) {
-        super(gain, "Constant");
+
+    public getRustStruct() {
+        return {
+            signal_id: this.signalId,
+            gain: this.gain
+        };
     }
+
+    constructor(
+        public readonly signalId: number,
+        public readonly gain: number
+    ) {
+        super("Constant");
+    }
+}
+
+export enum OperationType {
+    Add = "Add",
+    Minus = "Minus"
 }
 
 export class CompositionOperation extends Operation {
-    constructor(public readonly ch1: Operation, public readonly ch2: Operation, gain: number) {
-        super(gain, "Composition");
+    constructor(
+        public readonly gain: number,
+        public readonly ch1: Operation,
+        public readonly ch2: Operation,
+        public readonly operation: OperationType) {
+        super("Composition");
+    }
+
+    public getRustStruct(): any {
+        return {
+            gain: this.gain,
+            ch1: this.ch1.getRustStruct(),
+            ch2: this.ch2.getRustStruct,
+            operation: this.operation
+        };
     }
 }
-
-export class MinusOperation extends CompositionOperation { }
