@@ -13,6 +13,7 @@
       </ul>
 
       <form class="order-3 ml-auto form-inline">
+        <filter-selector></filter-selector>
         <select class="form-control" v-model="selectedGain">
           <option v-for="option in gainList" v-bind:value="option.value">{{option.label}}</option>
         </select>
@@ -29,11 +30,13 @@
 import { Component, Prop, Vue } from "vue-property-decorator";
 import { GeneralStore } from "../store";
 import SelectFile from "./SelectFile.vue";
+import FilterSelector from "./FilterSelector.vue";
 import AppConstants from "@/constants";
 
 @Component({
   components: {
-    SelectFile
+    SelectFile,
+    FilterSelector
   }
 })
 export default class Menubar extends Vue {
@@ -54,10 +57,11 @@ export default class Menubar extends Vue {
   }
 
   public get selectedGain(): number {
-    return this.store.selectedGain;
+    return this.store.currentMontage.signals[0].operation.gain;
   }
   public set selectedGain(newGain: number) {
-    this.store.updateSelectedGain(newGain);
+    this.store.currentMontage.updateGain(newGain);
+    this.store.applyMontage(this.store.currentMontage);
   }
 
   public get selectedResolution(): number {
@@ -101,13 +105,13 @@ export default class Menubar extends Vue {
 
   private changeGain(up: boolean): void {
     const index = AppConstants.gainList.findIndex(
-      gain => gain.value === this.store.selectedGain
+      gain => gain.value === this.selectedGain
     );
 
     if (up && index < AppConstants.gainList.length - 1) {
-      this.store.updateSelectedGain(AppConstants.gainList[index + 1].value);
+      this.selectedGain = AppConstants.gainList[index + 1].value;
     } else if (!up && index > 0) {
-      this.store.updateSelectedGain(AppConstants.gainList[index - 1].value);
+      this.selectedGain = AppConstants.gainList[index - 1].value;
     }
   }
 }

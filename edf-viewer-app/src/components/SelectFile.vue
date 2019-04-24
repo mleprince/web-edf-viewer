@@ -1,7 +1,7 @@
 <template>
   <div>
     <input type="file" id="file" ref="myFile" style="display:none;" @change="loadFile">
-    <button class="btn btn-outline-light" type="button" @click="trigger">Ouvrir un fichier</button>
+    <button class="btn btn-outline-light" type="button" @click="trigger">Open a file</button>
   </div>
 </template>
 

@@ -1,5 +1,6 @@
 #![allow(unused)]
 
+mod display;
 mod filter;
 mod montage;
 mod reader;
@@ -7,6 +8,7 @@ mod reader;
 extern crate biquad;
 extern crate edf_reader;
 extern crate js_sys;
+extern crate line_drawing;
 extern crate wasm_bindgen;
 extern crate wasm_bindgen_futures;
 extern crate web_sys;
@@ -36,14 +38,21 @@ use wasm_bindgen::JsValue;
 use wasm_bindgen::UnwrapThrowExt;
 use wasm_bindgen_futures::{future_to_promise, spawn_local, JsFuture};
 use web_sys::console;
+use web_sys::window;
 use web_sys::Blob;
+use web_sys::CanvasRenderingContext2d;
 use web_sys::File;
 use web_sys::FileReader;
+
+use wasm_bindgen::Clamped;
+use web_sys::ImageData;
 
 use edf_reader::async_reader::*;
 use edf_reader::model::*;
 
 use montage::model::*;
+
+use display::*;
 
 use futures::future::result;
 use futures::{Async, Future, Poll};
@@ -82,10 +91,23 @@ pub fn init_reader(file: File) -> js_sys::Promise {
 }
 
 #[wasm_bindgen]
-pub fn read_window(start_time: u32, duration: u32) -> js_sys::Promise {
+pub fn read_window(
+    start_time: u32,
+    duration: u32,
+    width: u32,
+    height: u32,
+    canvas_id: String,
+) -> js_sys::Promise {
     future_to_promise(
         reader::read_window(start_time, duration)
-            .and_then(|data: Vec<Vec<f32>>| result(montage::apply_montage(data, reader::get_header().unwrap_throw())))
+            // apply montage
+            .and_then(|data: Vec<Vec<f32>>| {
+                result(montage::apply_montage(
+                    data,
+                    reader::get_header().unwrap_throw(),
+                ))
+            })
+            // apply filter
             .map(|data: Vec<(Signal, Vec<f32>)>| {
                 data.iter()
                     .map(|(signal, signal_data)| {
@@ -93,16 +115,35 @@ pub fn read_window(start_time: u32, duration: u32) -> js_sys::Promise {
                     })
                     .collect()
             })
-            .map(|data: Vec<(Signal, Vec<f32>)>| {
-                let result = Array::new();
+            // create chart matrix of pixels and display in canvas
+            .and_then(move |data: Vec<(Signal, Vec<f32>)>| {
+                let document = window().unwrap().document().unwrap();
+                let canvas = document.get_element_by_id(&canvas_id).unwrap();
+                let canvas: web_sys::HtmlCanvasElement = canvas
+                    .dyn_into::<web_sys::HtmlCanvasElement>()
+                    .map_err(|_| ())
+                    .unwrap();
 
-                unsafe {
-                    for (signal, signal_data) in data {
-                        result.push(&JsValue::from(Float32Array::view(&signal_data[..])));
-                    }
-                }
+                let context = canvas
+                    .get_context("2d")
+                    .unwrap()
+                    .unwrap()
+                    .dyn_into::<web_sys::CanvasRenderingContext2d>()
+                    .unwrap();
 
-                JsValue::from(result)
+                let mut image_data: Vec<u8> =
+                    PixelMatrix::new(width, height, data, RenderingType::Line).compute();
+
+                let data = ImageData::new_with_u8_clamped_array_and_sh(
+                    Clamped(&mut image_data),
+                    width,
+                    height,
+                )
+                .unwrap_throw();
+
+                context.put_image_data(&data, 0.0, 0.0);
+
+                Ok(JsValue::NULL)
             })
             .map_err(|e| to_js_error(e)),
     )

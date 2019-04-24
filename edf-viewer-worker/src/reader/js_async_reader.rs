@@ -13,13 +13,6 @@ use web_sys::Blob;
 use web_sys::File;
 use web_sys::FileReader;
 
-// A macro to provide `println!(..)`-style syntax for `console.debug` logging.
-macro_rules! debug {
-    ( $( $t:tt )* ) => {
-        web_sys::console::debug_1(&format!( $( $t )* ).into());
-    }
-}
-
 pub struct JsAsyncReader {
     file: File,
 }
@@ -36,7 +29,6 @@ impl AsyncFileReader for JsAsyncReader {
         offset: u64,
         length: u64,
     ) -> Box<Future<Item = Vec<u8>, Error = std::io::Error> + Send> {
-        debug!("offset : {} / length : {}", offset, length);
         match FileFuture::new(&self.file, offset as usize, length as usize) {
             Ok(future) => Box::new(future),
             Err(e) => Box::new(futures::future::err(e)),
@@ -55,8 +47,6 @@ unsafe impl Send for FileFuture {}
 
 impl FileFuture {
     fn new(file: &File, offset: usize, length: usize) -> Result<FileFuture, Error> {
-        debug!("new FileReader : {}", file.name());
-
         let file_reader = FileReader::new().unwrap_throw();
 
         let slice: Blob = file
@@ -106,8 +96,6 @@ impl Future for FileFuture {
     fn poll(&mut self) -> Poll<Vec<u8>, Error> {
         // setup callbacks
         self.setup_callbacks();
-
-        debug!("FileReader status {}", self.file_reader.ready_state());
 
         if self.file_reader.ready_state() == 2 {
             match self.file_reader.result() {

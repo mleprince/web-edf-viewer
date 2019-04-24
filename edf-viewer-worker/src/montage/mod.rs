@@ -35,7 +35,7 @@ pub fn apply_montage(
 ) -> Result<Vec<(Signal, Vec<f32>)>, Error> {
     match get_current_montage() {
         Some(montage) => Ok(montage
-            .channels
+            .signals
             .into_iter()
             .map( |signal: Signal| {
                 // TODO : delete this clone call
@@ -50,7 +50,7 @@ fn recursion(data: &Vec<Vec<f32>>, operation: Operation) -> Vec<f32> {
     match operation {
         Operation::Constant { gain, signal_id } => data[signal_id as usize][..]
             .iter()
-            .map(|v| v * gain)
+            .map(|v|  v * gain)
             .collect(),
         Operation::Composition {
             gain,

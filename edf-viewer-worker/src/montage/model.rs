@@ -34,8 +34,7 @@ pub enum FilterType {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FilterDescription {
     pub filter_type: FilterType,
-    pub freq1: f32,
-    pub freq2: f32,
+    pub freq: f32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -48,6 +47,6 @@ pub struct Signal {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Montage {
-    pub channels: Vec<Signal>,
+    pub signals: Vec<Signal>,
     pub label: String,
 }

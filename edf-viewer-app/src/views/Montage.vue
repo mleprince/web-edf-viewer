@@ -1,5 +1,5 @@
 <template>
-  <div class="montage">
-    <h1>This is an about page</h1>
+  <div>
+    <h1>TODO</h1>
   </div>
 </template>

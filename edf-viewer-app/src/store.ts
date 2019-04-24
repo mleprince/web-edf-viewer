@@ -1,4 +1,4 @@
-import { EDFHeader } from "./edfReader/edfReader";
+import { EDFHeader } from "./model/edfHeader";
 import Vue from "vue";
 import Vuex, { StoreOptions } from "vuex";
 import { Montage } from "./model/montage";
@@ -19,18 +19,11 @@ export class GeneralStore extends VuexModule {
   @getter public edfHeader: EDFHeader | null = null;
   @getter public currentResolution: number = 20000;
   @getter public currentStartTime: number = 0;
-  @getter public currentMontage: Montage | null = null;
-
-  @getter public selectedGain: number = 1;
+  @getter public currentMontage: Montage = new Montage("default", []);
 
   @getter
   get isFileLoaded(): boolean {
     return this.edfHeader !== null;
-  }
-
-  @mutation
-  public updateSelectedGain(newGain: number) {
-    this.selectedGain = newGain;
   }
 
   @mutation
@@ -42,6 +35,7 @@ export class GeneralStore extends VuexModule {
   @mutation
   public applyMontage(montage: Montage) {
     this.currentMontage = montage;
+    worker.set_current_montage(montage.toWasmStruct());
   }
 
   @mutation
@@ -65,11 +59,7 @@ export class GeneralStore extends VuexModule {
     worker.init_reader(file).then((edfHeader: EDFHeader) => {
       this.applyEdfHeader(edfHeader);
       const montage = Montage.getDefaultMontage(edfHeader);
-      console.log(montage);
-      worker.set_current_montage(montage.toRustStruct());
-
-      worker.read_window(0, 10000).then((result: Array<Float32Array>) => console.log(result));
-
+      this.applyMontage(montage);
     });
   }
 }
