@@ -2,7 +2,7 @@
 The aims of this project is to use and see limitations of :
 * [File Api](https://developer.mozilla.org/en-US/docs/Web/API/File) to read a local EDF File
 * ~~[Sound api](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) to apply filters and montages to the signals~~ => see below
-* [AssemblyScript](https://github.com/AssemblyScript/assemblyscript) Apply filters and montages to the signals
+* [WebAssembly With Rust](https://rustwasm.github.io/) Apply filters and montages to the signals, generate the matrix of pixels of the chart
 * [VueJS](https://vuejs.org/) (with VueX and Typescript) First time I will use this framework
 
 
@@ -11,7 +11,6 @@ It thought it will be possible to use WebAudio in the case of an ExG Viewer. Thi
 ```
 signalTransormer.ts:10 Uncaught DOMException: Failed to execute 'createBuffer' on 'BaseAudioContext': The sample rate provided (100) is outside the range [3000, 384000].
 ```
-
 
 
 
