@@ -1,12 +1,15 @@
 jobs:
   include:
     - stage : build wasm worker
-      install:
-        - cd edf-viewer-worker
-        - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-        # - rustup target add wasm32-unknown-unknown
-        # - cargo check --target wasm32-unknown-unknown
-      script:
+  # Builds with wasm-pack.
+      rust: beta
+      env: RUST_BACKTRACE=1
+      before_script:
+        - (test -x $HOME/.cargo/bin/cargo-install-update || cargo install cargo-update)
+        - (test -x $HOME/.cargo/bin/cargo-generate || cargo install --vers "^0.2" cargo-generate)
+        - cargo install-update -a
+        - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh -s -- -f
+      scrip:
         - sh ./build.sh
     - stage : build Vue.js App
       langage : node_js
