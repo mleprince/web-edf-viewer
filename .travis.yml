@@ -16,6 +16,7 @@ jobs:
         # - (test -x $HOME/.cargo/bin/wasm-pack || cargo install wasm-pack)
         - cd edf-viewer-app
         - npm install
+        - npm install -g webpack
         - cd ../
       script:
         - cd edf-viewer-worker && sh ./build.sh
