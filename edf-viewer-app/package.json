@@ -17,12 +17,9 @@
     "vuex-class-component": "^1.6.0"
   },
   "devDependencies": {
-    "@types/dygraphs": "^1.1.8",
-    "@types/webassembly-js-api": "0.0.2",
     "@vue/cli-plugin-babel": "^3.6.0",
     "@vue/cli-plugin-typescript": "^3.6.0",
     "@vue/cli-service": "^3.6.0",
-    "assemblyscript": "github:AssemblyScript/assemblyscript",
     "typescript": "^3.4.5",
     "vue-template-compiler": "^2.6.10"
   }
