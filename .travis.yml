@@ -3,7 +3,7 @@ jobs:
     - stage : build wasm worker
   # Builds with wasm-pack.
       language: rust
-      language: nod_js
+      language: node_js
       node_js:
         - "10"
       env: RUST_BACKTRACE=1
