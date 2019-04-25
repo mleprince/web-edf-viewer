@@ -6,10 +6,11 @@ jobs:
       env: RUST_BACKTRACE=1
       cache : cargo
       before_script:
+        - cd edf-viewer-worker
         - rustup target add wasm32-unknown-unknown
         - cargo install wasm-pack
         #- curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh -s -- -f
-      scrip:
+      script:
         - sh ./build.sh
     - stage : build Vue.js App
       langage : node_js
