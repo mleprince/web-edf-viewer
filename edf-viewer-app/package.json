@@ -5,10 +5,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint",
-    "asbuild:untouched": "asc assembly/filter.ts -b build/untouched.wasm -t build/untouched.wat --importMemory --sourceMap --validate --debug",
-    "asbuild:optimized": "asc assembly/filter.ts -b build/optimized.wasm -t build/optimized.wat --importMemory --sourceMap --validate --optimize",
-    "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized"
+    "lint": "vue-cli-service lint"
   },
   "dependencies": {
     "bootstrap": "^4.3.1",
