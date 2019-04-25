@@ -1,0 +1,8 @@
+matrix:
+  include:
+    - language: rust
+      python: 2.7
+      before_script:
+        - cd edf-viewer-worker
+      script:
+        - ./build.sh

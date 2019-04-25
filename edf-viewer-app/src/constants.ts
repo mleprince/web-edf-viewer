@@ -18,4 +18,3 @@ export default class AppConstants {
 
     public static defaultGain = 1;
 }
-
