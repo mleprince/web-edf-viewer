@@ -3,7 +3,6 @@ matrix:
     - language: rust
       before_script:
         - cd edf-viewer-worker
-        - cargo install
       script:
         - sh ./build.sh
     - langage : npm
