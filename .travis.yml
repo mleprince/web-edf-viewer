@@ -5,4 +5,4 @@ matrix:
       before_script:
         - cd edf-viewer-worker
       script:
-        - ./build.sh
+        - sh ./build.sh
