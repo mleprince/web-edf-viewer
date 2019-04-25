@@ -12,10 +12,9 @@ jobs:
         - source $HOME/.cargo/env
         - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh # install wasm-pack
       install:
-
         # - rustup target add wasm32-unknown-unknown
         # - (test -x $HOME/.cargo/bin/wasm-pack || cargo install wasm-pack)
-        - cd ../edf-viewer-app
+        - cd edf-viewer-app
         - npm install
         - cd ../
       script:
