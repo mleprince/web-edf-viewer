@@ -5,11 +5,15 @@ jobs:
       language: rust
       env: RUST_BACKTRACE=1
       cache : cargo
-      before_script:
+      before_install:
+        - wget https://raw.githubusercontent.com/creationix/nvm/v0.34.0/nvm.sh -O ~/.nvm/nvm.sh
+        - source ~/.nvm/nvm.sh
+        - nvm install 10  # for Node v5
+        - node --version
+      install:
         - cd edf-viewer-worker
         - rustup target add wasm32-unknown-unknown
         - (test -x $HOME/.cargo/bin/wasm-pack || cargo install wasm-pack)
-        #- curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh -s -- -f
       script:
         - sh ./build.sh
     - stage : build Vue.js App
