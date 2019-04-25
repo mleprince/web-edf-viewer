@@ -6,3 +6,8 @@ matrix:
         - cargo install
       script:
         - sh ./build.sh
+    - langage : npm
+      before_script:
+        - npm install
+      script:
+        - npm run build
