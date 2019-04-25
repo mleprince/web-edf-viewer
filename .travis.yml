@@ -8,10 +8,10 @@ jobs:
       cache: cargo
       before_install:
         - node --version
-        - curl https://sh.rustup.rs -sSf | sh # install rust
+        - curl https://sh.rustup.rs -sSf | sh -s -- -y # install rust
         - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh # install wasm-pack
       install:
-      
+
         # - rustup target add wasm32-unknown-unknown
         # - (test -x $HOME/.cargo/bin/wasm-pack || cargo install wasm-pack)
         - cd ../edf-viewer-app
