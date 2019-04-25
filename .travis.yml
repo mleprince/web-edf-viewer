@@ -14,13 +14,9 @@ jobs:
         - cd edf-viewer-worker
         - rustup target add wasm32-unknown-unknown
         - (test -x $HOME/.cargo/bin/wasm-pack || cargo install wasm-pack)
-      script:
-        - sh ./build.sh
-    - stage : build Vue.js App
-      langage : node_js
-      cache : npm
-      install:
         - cd edf-viewer-app
         - npm install
+        - cd ../
       script:
-        - npm run build
+        - sh ./edf-viewer-worker/build.sh
+        - cd edf-viewer-app && npm run build
