@@ -14,7 +14,7 @@ jobs:
         - cd edf-viewer-worker
         - rustup target add wasm32-unknown-unknown
         - (test -x $HOME/.cargo/bin/wasm-pack || cargo install wasm-pack)
-        - cd edf-viewer-app
+        - cd ../edf-viewer-app
         - npm install
         - cd ../
       script:
