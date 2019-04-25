@@ -13,7 +13,7 @@ import Vue from "vue";
 import Menubar from "./components/Menubar.vue";
 import Component from "vue-class-component";
 import { GeneralStore } from "./store";
-import AppConstants from "@/constants";
+import AppConstants from "./constants";
 
 @Component({
   components: {
