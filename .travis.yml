@@ -2,7 +2,7 @@ jobs:
   include:
     - stage : build wasm worker
   # Builds with wasm-pack.
-      rust: beta
+      language: rust
       env: RUST_BACKTRACE=1
       before_script:
         - (test -x $HOME/.cargo/bin/cargo-install-update || cargo install cargo-update)
