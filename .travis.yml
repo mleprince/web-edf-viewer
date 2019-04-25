@@ -1,16 +1,18 @@
-- stage : build wasm worker
-  language : rust
-  install:
-    - rustup target add wasm32-unknown-unknown
-    - check --target wasm32-unknown-unknown
-    - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-    - cd edf-viewer-worker
-  script:
-    - sh ./build.sh
-- stage : build Vue.js App
-  langage : node_js
-  before_script:
-    - cd ../edf-viewer-app
-    - npm install
-  script:
-    - npm run build
+jobs:
+  include:
+    - stage : build wasm worker
+      language : rust
+      install:
+        - rustup target add wasm32-unknown-unknown
+        - check --target wasm32-unknown-unknown
+        - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+        - cd edf-viewer-worker
+      script:
+        - sh ./build.sh
+    - stage : build Vue.js App
+      langage : node_js
+      before_script:
+        - cd ../edf-viewer-app
+        - npm install
+      script:
+        - npm run build
