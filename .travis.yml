@@ -15,7 +15,7 @@ jobs:
     - stage : build Vue.js App
       langage : node_js
       before_script:
-        - cd ../edf-viewer-app
+        - cd edf-viewer-app
         - npm install
       script:
         - npm run build
