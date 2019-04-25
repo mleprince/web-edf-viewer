@@ -3,9 +3,10 @@ matrix:
     - language: rust
       before_script:
         - cd edf-viewer-worker
+        - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       script:
         - sh ./build.sh
-    - langage : npm
+    - langage : node_js
       before_script:
         - cd ../edf-viewer-app
         - npm install
