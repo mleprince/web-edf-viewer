@@ -2,21 +2,18 @@ jobs:
   include:
     - stage : build wasm worker
   # Builds with wasm-pack.
-      language: rust
       language: node_js
       node_js:
         - "10"
-      env: RUST_BACKTRACE=1
-      cache : cargo
+      cache: cargo
       before_install:
-        - wget https://raw.githubusercontent.com/creationix/nvm/v0.34.0/nvm.sh -O ~/.nvm/nvm.sh
-        - source ~/.nvm/nvm.sh
-        - nvm install 10  # for Node v5
         - node --version
+        - curl https://sh.rustup.rs -sSf | sh # install rust
+        - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh # install wasm-pack
       install:
-        - cd edf-viewer-worker
-        - rustup target add wasm32-unknown-unknown
-        - (test -x $HOME/.cargo/bin/wasm-pack || cargo install wasm-pack)
+      
+        # - rustup target add wasm32-unknown-unknown
+        # - (test -x $HOME/.cargo/bin/wasm-pack || cargo install wasm-pack)
         - cd ../edf-viewer-app
         - npm install
         - cd ../
