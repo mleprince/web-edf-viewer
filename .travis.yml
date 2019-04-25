@@ -1,16 +1,14 @@
-matrix:
-  include:
-    - stage : build wasm worker
-      language : rust
-      before_script:
-        - cd edf-viewer-worker
-        - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-      script:
-        - sh ./build.sh
-    - stage : build Vue.js App
-      langage : node_js
-      before_script:
-        - cd ../edf-viewer-app
-        - npm install
-      script:
-        - npm run build
+- stage : build wasm worker
+  language : rust
+  before_script:
+    - cd edf-viewer-worker
+    - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+  script:
+    - sh ./build.sh
+- stage : build Vue.js App
+  langage : node_js
+  before_script:
+    - cd ../edf-viewer-app
+    - npm install
+  script:
+    - npm run build
