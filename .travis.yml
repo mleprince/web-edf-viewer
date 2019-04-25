@@ -8,7 +8,7 @@ jobs:
       before_script:
         - cd edf-viewer-worker
         - rustup target add wasm32-unknown-unknown
-        - cargo install wasm-pack
+        - (test -x $HOME/.cargo/bin/wasm-pack || cargo install wasm-pack)
         #- curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh -s -- -f
       script:
         - sh ./build.sh
