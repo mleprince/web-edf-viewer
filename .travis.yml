@@ -14,7 +14,7 @@ script:
 - cd edf-viewer-worker && sh ./build.sh
 - cd ../
 - cd edf-viewer-app && npm run build
-- echo "<?php header( 'Location: /index.html' ) ;  ?>" > public/index.php # trick for deploy static website to heroku
+- echo "<?php header( 'Location: /edf-viewer-app/dist/index.html' ) ;  ?>" > ../index.php # trick for deploy static website to heroku
 deploy:
   provider: heroku
   api_key:
