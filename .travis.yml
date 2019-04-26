@@ -14,8 +14,8 @@ jobs:
         - cd edf-viewer-app
         - npm install
     #    - npm install -g webpack@3
-        - cd ../
+    #    - cd ../
       script:
     #    - cd edf-viewer-worker && sh ./build.sh
-        - cd ..
+    #    - cd ..
         - cd edf-viewer-app && npm run build
