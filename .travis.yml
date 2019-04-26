@@ -29,6 +29,7 @@ deploy:
   keep_history: true
   repo : edf-viewer-demo
   local_dir: app/dist/
+  verbose: true
   on:
     branch: master
 
