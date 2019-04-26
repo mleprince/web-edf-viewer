@@ -1,5 +1,7 @@
 # EDF Viewer
 
+**!!! Work in progress !!!**
+
 This application display in the browser [EDF files](https://www.edfplus.info/). Basic features are included : filters, gain, montages, zoom
 
 **[Open the App](https://mleprince.github.io/web-edf-viewer/)**
