@@ -19,8 +19,6 @@ script:
 - cd ../
 - cd app && npm run build
 - cd dist
-- "echo \"<?php header( 'Location: index.html' ) ;  ?>\" > index.php" # trick for deploy static website to heroku
-- "echo 'AddType application/wasm wasm' > .htaccess" 
 
 deploy:
   provider: pages
