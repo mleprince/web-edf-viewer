@@ -11,12 +11,6 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "baseUrl": ".",
-    "types": [
-      "webpack-env",
-      "webassembly-js-api",
-      "dygraphs",
-      "./public/edf_worker_bg.d.ts"
-    ],
     "paths": {
       "@/*": [
         "src/*"
