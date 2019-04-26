@@ -6,7 +6,6 @@ jobs:
       node_js:
         - "10"
       before_install:
-        - node --version
     #    - curl https://sh.rustup.rs -sSf | sh -s -- -y # install rust
     #   - source $HOME/.cargo/env
     #    - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh # install wasm-pack
@@ -18,4 +17,4 @@ jobs:
       script:
     #    - cd edf-viewer-worker && sh ./build.sh
     #    - cd ..
-        - cd edf-viewer-app && npm run build
+        -  npm run build
