@@ -7,9 +7,9 @@
         <li class="nav-item active">
           <router-link class="nav-link" to="/">Viewer</router-link>
         </li>
-        <li class="nav-item">
+        <!-- <li class="nav-item">
           <router-link class="nav-link" to="/montage">Montages</router-link>
-        </li>
+        </li> -->
       </ul>
 
       <form class="order-3 ml-auto form-inline">
