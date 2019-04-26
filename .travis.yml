@@ -29,6 +29,4 @@ deploy:
   keep_history: true
   local_dir: app/dist/
   verbose: true
-  on:
-    branch: gh_page
 
