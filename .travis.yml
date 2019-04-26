@@ -3,16 +3,15 @@ language: node_js
 node_js :
 - "10"
 before_install:
-#    - curl https://sh.rustup.rs -sSf | sh -s -- -y # install rust
-#   - source $HOME/.cargo/env
-#    - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh # install wasm-pack
+  - curl https://sh.rustup.rs -sSf | sh -s -- -y # install rust
+  - source $HOME/.cargo/env
+  - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh # install wasm-pack
 install:
   - cd edf-viewer-app
   - npm install
   - npm ci
-#    - npm install -g webpack@3
-#    - cd ../
+  - cd ../
 script:
-#    - cd edf-viewer-worker && sh ./build.sh
-#    - cd ..
-  -  npm run build
+  - cd edf-viewer-worker && sh ./build.sh
+  - cd ../
+  - cd edf-viewer-app && npm run build
