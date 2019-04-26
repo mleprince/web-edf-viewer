@@ -62,4 +62,4 @@ wasm-bindgen-test = "0.2"
 predicates = "1.0"
 
 [profile.release]
-debug = true
+debug=true
