@@ -1,4 +1,9 @@
-# web-edf-viewer
+# EDF Viewer
+
+This application display in the browser [EDF files](https://www.edfplus.info/). Basic features are included : filters, gain, montages, zoom
+
+**[Open the App](https://mleprince.github.io/web-edf-viewer/)**
+
 The aims of this project is to use and see limitations of :
 * [WebAssembly With Rust](https://rustwasm.github.io/) with crates Wasm_bindgen, web_sys and js_sys :
     * Parse EDF File
