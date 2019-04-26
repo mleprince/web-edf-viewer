@@ -11,7 +11,7 @@ jobs:
     #    - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh # install wasm-pack
       install:
         - cd edf-viewer-app
-        - npm instal
+        - npm install
         - npm ci
     #    - npm install -g webpack@3
     #    - cd ../
