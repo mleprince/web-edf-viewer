@@ -3,6 +3,8 @@ jobs:
     - stage : build wasm worker
   # Builds with wasm-pack.
       language: node_js
+      node_js :
+      - "10"
       before_install:
     #    - curl https://sh.rustup.rs -sSf | sh -s -- -y # install rust
     #   - source $HOME/.cargo/env
