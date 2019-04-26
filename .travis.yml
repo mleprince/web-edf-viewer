@@ -1,6 +1,10 @@
 language: node_js
 node_js:
 - '10'
+cache:
+  directories:
+  - edf-viewer-worker/target
+  - edf-viewer-app/.node_modules
 before_install:
 - curl https://sh.rustup.rs -sSf | sh -s -- -y
 - source $HOME/.cargo/env
