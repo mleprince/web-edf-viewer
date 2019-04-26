@@ -1,17 +1,23 @@
-# Builds with wasm-pack.
 language: node_js
-node_js :
-- "10"
+node_js:
+- '10'
 before_install:
-  - curl https://sh.rustup.rs -sSf | sh -s -- -y # install rust
-  - source $HOME/.cargo/env
-  - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh # install wasm-pack
+- curl https://sh.rustup.rs -sSf | sh -s -- -y
+- source $HOME/.cargo/env
+- curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 install:
-  - cd edf-viewer-app
-  - npm install
-  - npm ci
-  - cd ../
+- cd edf-viewer-app
+- npm install
+- npm ci
+- cd ../
 script:
-  - cd edf-viewer-worker && sh ./build.sh
-  - cd ../
-  - cd edf-viewer-app && npm run build
+- cd edf-viewer-worker && sh ./build.sh
+- cd ../
+- cd edf-viewer-app && npm run build
+deploy:
+  provider: heroku
+  api_key:
+    secure: DP+cLRMnno/3q6P/FCALR6+yfnVpcG4NyyCdv0142TqeEHQDKRiL83nfAj3tua3T7KYNOXsNDrDyjY4dpM6LO1HJW0XpokrI4EEr3AxgdyH0y78z8B6GY0XFYMFsxE0LchtNWRgM3h1lLyxgmGVh0T1Tl169gpGaqIexPL0Nf4bE+Xh6e1OqQ/4Py/clGTLBjfyo8GCcbBGSLPYvWFXvVjpxPSlHmXlLlAxZZJtsb5kIX3nEI4zAW1IncE3A0iwNS5tgrZ8SvGQ5j/vOalqia6RQR9OU6oPJmgAChun3wdGWQOvRb+TqiUXsdjKVEK5ZYSIxbWhz62l0GKN5zj/lTWG7re+FQvzvBXwwxXGHbgiC/I6wzm8z1YBzEdRevdei72qcUW650KcOmFGfinjEjA+dQKPCn1TnWwmKRAnKOoPwlFQYEU91D1y6QB6+xG13wzjTNos1DNm6BuqhCQDhnd6qeDioExpiN9ZhHKW7KRIGyxTZOpg4MhnxzrR9tm7/vcKWZFU+tdpPQktvrIBAAHsw3f8fmez+bB7mGpJ6H2GRmopW5PGw/QBTFIRhRmABxd9kSxxUgEkIpVJjpI5HiTIp5lWwgyTKMtyDCY2ZX9i43kcDjtbEVwvuxr4BGWkPTt8WwYzo80jc44mdtF55qN5CTQ9gPyHCGhPe62Wbo1M=
+  app: edf-viewer
+  on:
+    repo: mleprince/web-edf-viewer
