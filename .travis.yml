@@ -3,23 +3,24 @@ node_js:
 - '10'
 cache:
   directories:
-  - edf-viewer-worker/target
-  - edf-viewer-app/.node_modules
+  - worker/target
+  - app/.node_modules
 before_install:
 - curl https://sh.rustup.rs -sSf | sh -s -- -y
 - source $HOME/.cargo/env
 - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 install:
-- cd edf-viewer-app
+- cd app
 - npm install
 - npm ci
 - cd ../
 script:
-- cd edf-viewer-worker && sh ./build.sh
+- cd worker && sh ./build.sh
 - cd ../
-- cd edf-viewer-app && npm run build
+- cd app && npm run build
 - cd dist
-- echo "<?php header( 'Location&#58; index.html' ) ;  ?>" > index.php # trick for deploy static website to heroku
+- "echo \"<?php header( 'Location: index.html' ) ;  ?>\" > index.php" # trick for deploy static website to heroku
+- "echo 'AddType application/wasm wasm' > .htaccess" 
 deploy:
   provider: heroku
   api_key:

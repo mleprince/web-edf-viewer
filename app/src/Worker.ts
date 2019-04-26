@@ -1,4 +1,4 @@
-import * as worker from "../../edf-viewer-worker/pkg/edf_viewer_worker";
+import * as worker from "../../worker/pkg/edf_viewer_worker";
 
 // let workerMemory: WebAssembly.Memory;
 

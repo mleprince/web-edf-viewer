@@ -14,7 +14,7 @@
 import { Component, Vue, Watch } from "vue-property-decorator";
 import { GeneralStore } from "@/store";
 import { Signal, Montage } from "@/model/montage";
-import * as worker from "../../../edf-viewer-worker/pkg/edf_viewer_worker";
+import * as worker from "../../../worker/pkg/edf_viewer_worker";
 
 @Component
 export default class Viewer extends Vue {

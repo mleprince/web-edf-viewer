@@ -4,7 +4,7 @@ import Vuex, { StoreOptions } from "vuex";
 import { Montage } from "./model/montage";
 import createLogger from "vuex/dist/logger";
 import { VuexModule, mutation, action, getter, Module } from "vuex-class-component";
-import * as worker from "../../edf-viewer-worker/pkg/edf_viewer_worker";
+import * as worker from "../../worker/pkg/edf_viewer_worker";
 
 Vue.use(Vuex);
 
