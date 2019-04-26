@@ -27,9 +27,8 @@ deploy:
   skip_cleanup: true
   github_token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
   keep_history: true
-  repo : edf-viewer-demo
   local_dir: app/dist/
   verbose: true
   on:
-    branch: master
+    branch: gh_page
 
