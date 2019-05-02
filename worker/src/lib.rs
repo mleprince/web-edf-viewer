@@ -1,31 +1,27 @@
 #![allow(unused)]
 
-mod display;
-mod filter;
-mod montage;
-mod reader;
-
 extern crate biquad;
 extern crate edf_reader;
 extern crate js_sys;
 extern crate line_drawing;
+#[macro_use]
+extern crate serde_derive;
 extern crate wasm_bindgen;
 extern crate wasm_bindgen_futures;
 extern crate web_sys;
 
-#[macro_use]
-extern crate serde_derive;
-
-use crate::montage::model::Signal;
-use montage::model::Montage;
 use std::any::Any;
 use std::io::{Error, ErrorKind};
 use std::mem;
 use std::os::raw::c_void;
 use std::slice;
 
+use cfg_if::cfg_if;
+use edf_reader::async_reader::*;
 use edf_reader::file_reader::AsyncFileReader;
-
+use edf_reader::model::*;
+use futures::future::result;
+use futures::{Async, Future, Poll};
 use js_sys::Array;
 use js_sys::ArrayBuffer;
 use js_sys::Float32Array;
@@ -33,6 +29,8 @@ use js_sys::Function;
 use js_sys::Promise;
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::Clamped;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 use wasm_bindgen::UnwrapThrowExt;
@@ -43,22 +41,18 @@ use web_sys::Blob;
 use web_sys::CanvasRenderingContext2d;
 use web_sys::File;
 use web_sys::FileReader;
-
-use wasm_bindgen::Clamped;
 use web_sys::ImageData;
 
-use edf_reader::async_reader::*;
-use edf_reader::model::*;
-
-use montage::model::*;
-
 use display::*;
+use montage_service::model::Montage;
+use montage_service::model::*;
 
-use futures::future::result;
-use futures::{Async, Future, Poll};
+use crate::montage_service::model::Signal;
 
-use cfg_if::cfg_if;
-use wasm_bindgen::prelude::*;
+mod display;
+mod filter;
+mod montage_service;
+mod reader;
 
 cfg_if::cfg_if! {
     // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -98,61 +92,69 @@ pub fn read_window(
     height: u32,
     canvas_id: String,
 ) -> js_sys::Promise {
-    future_to_promise(
-        reader::read_window(start_time, duration)
-            // apply montage
-            .and_then(|data: Vec<Vec<f32>>| {
-                result(montage::apply_montage(
-                    data,
-                    reader::get_header().unwrap_throw(),
-                ))
-            })
-            // apply filter
-            .map(|data: Vec<(Signal, Vec<f32>)>| {
-                data.iter()
-                    .map(|(signal, signal_data)| {
-                        (signal.clone(), filter::apply_filters(signal_data, &signal))
-                    })
-                    .collect()
-            })
-            // create chart matrix of pixels and display in canvas
-            .and_then(move |data: Vec<(Signal, Vec<f32>)>| {
-                let document = window().unwrap().document().unwrap();
-                let canvas = document.get_element_by_id(&canvas_id).unwrap();
-                let canvas: web_sys::HtmlCanvasElement = canvas
-                    .dyn_into::<web_sys::HtmlCanvasElement>()
-                    .map_err(|_| ())
-                    .unwrap();
+    match montage_service::get_current_montage() {
+        Some(montage) => future_to_promise(
+            reader::read_window(start_time, duration)
+                // apply montage and filters
+                .and_then(move |data: Vec<Vec<f32>>| -> Result<Vec<Vec<f32>>,Error> {
+                    montage
+                        .signals
+                        .iter()
+                        .map(|signal: &Signal| {
+                            let channel_data =
+                                montage_service::get_channel_view(&data, &signal.operation)?;
+                            Ok(filter::apply_filters(&channel_data, signal))
+                        })
+                        .collect()
+                })
+                // create chart matrix of pixels and display in canvas
+                .and_then(move |data: Vec<Vec<f32>>| {
+                    let canvas_context = get_canvas_context(canvas_id);
 
-                let context = canvas
-                    .get_context("2d")
-                    .unwrap()
-                    .unwrap()
-                    .dyn_into::<web_sys::CanvasRenderingContext2d>()
-                    .unwrap();
+                    let mut image_data: Vec<u8> =
+                        PixelMatrix::new(width, height, data, RenderingType::Line).compute();
 
-                let mut image_data: Vec<u8> =
-                    PixelMatrix::new(width, height, data, RenderingType::Line).compute();
+                    let data = ImageData::new_with_u8_clamped_array_and_sh(
+                        Clamped(&mut image_data),
+                        width,
+                        height,
+                    )
+                    .unwrap_throw();
 
-                let data = ImageData::new_with_u8_clamped_array_and_sh(
-                    Clamped(&mut image_data),
-                    width,
-                    height,
-                )
-                .unwrap_throw();
+                    canvas_context.put_image_data(&data, 0.0, 0.0);
 
-                context.put_image_data(&data, 0.0, 0.0);
-
-                Ok(JsValue::NULL)
-            })
-            .map_err(|e| to_js_error(e)),
-    )
+                    Ok(JsValue::NULL)
+                })
+                .map_err(|e| to_js_error(e)),
+        ),
+        None => js_sys::Promise::resolve(&to_js_error(Error::new(
+            ErrorKind::Other,
+            "There is no current montage",
+        ))),
+    }
 }
 
 #[wasm_bindgen]
 pub fn set_current_montage(val: &JsValue) {
     let montage: Montage = val.into_serde().unwrap_throw();
-    montage::set_current_montage(montage);
+    montage_service::set_current_montage(montage);
+}
+
+fn get_canvas_context(canvas_id: String) -> CanvasRenderingContext2d {
+
+    let document = window().unwrap().document().unwrap();
+    let canvas = document.get_element_by_id(&canvas_id).unwrap();
+    let canvas: web_sys::HtmlCanvasElement = canvas
+        .dyn_into::<web_sys::HtmlCanvasElement>()
+        .map_err(|_| ())
+        .unwrap();
+
+    canvas
+        .get_context("2d")
+        .unwrap()
+        .unwrap()
+        .dyn_into::<web_sys::CanvasRenderingContext2d>()
+        .unwrap()
 }
 
 fn to_js_error(error: Error) -> JsValue {

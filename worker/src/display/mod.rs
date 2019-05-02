@@ -1,4 +1,4 @@
-use crate::montage::model::Signal;
+use crate::montage_service::model::Signal;
 use std::mem;
 use std::os::raw::c_void;
 use std::slice;
@@ -23,7 +23,7 @@ pub enum RenderingType {
 pub struct PixelMatrix {
     width: u32,
     height: u32,
-    data: Vec<(Signal, Vec<f32>)>,
+    data: Vec<Vec<f32>>,
     draw: Box<FnMut(&[f32], f32, &mut Vec<u8>)>,
 }
 
@@ -31,7 +31,7 @@ impl<'a> PixelMatrix {
     pub fn new(
         width: u32,
         height: u32,
-        data: Vec<(Signal, Vec<f32>)>,
+        data: Vec<Vec<f32>>,
         rendering_type: RenderingType,
     ) -> PixelMatrix {
         debug!(
@@ -50,7 +50,7 @@ impl<'a> PixelMatrix {
     pub fn compute(&mut self) -> Vec<u8> {
         let mut result = vec![0; (4 * self.width * self.height) as usize];
 
-        for (i, (signal, signal_data)) in self.data.iter().enumerate() {
+        for (i, signal_data) in self.data.iter().enumerate() {
             let offset: f32 = (i as f32 + 0.5) * self.height as f32 / self.data.len() as f32;
 
             (self.draw)(signal_data, offset, &mut result);
@@ -82,7 +82,7 @@ impl<'a> PixelMatrix {
             // We draw only the points
             RenderingType::Point => Box::new(move |data, offset, result| {
                 for i in 0..data.len() {
-                    let (x,y) = PixelMatrix::get_coord(
+                    let (x, y) = PixelMatrix::get_coord(
                         data[i],
                         offset,
                         i as f32,
