@@ -86,24 +86,29 @@ pub fn init_reader(file: File) -> js_sys::Promise {
 
 #[wasm_bindgen]
 pub fn read_window(
-    start_time: u32,
-    duration: u32,
+    start_time_in_ms: u32,
+    duration_in_ms: u32,
     width: u32,
     height: u32,
     canvas_id: String,
 ) -> js_sys::Promise {
     match montage_service::get_current_montage() {
         Some(montage) => future_to_promise(
-            reader::read_window(start_time, duration)
+            reader::read_window(start_time_in_ms, duration_in_ms)
                 // apply montage and filters
-                .and_then(move |data: Vec<Vec<f32>>| -> Result<Vec<Vec<f32>>,Error> {
+                .and_then(move |data: Vec<Vec<f32>>| -> Result<Vec<Vec<f32>>, Error> {
                     montage
                         .signals
                         .iter()
                         .map(|signal: &Signal| {
                             let channel_data =
                                 montage_service::get_channel_view(&data, &signal.operation)?;
-                            Ok(filter::apply_filters(&channel_data, signal))
+
+                            if signal.filter.len() > 0 {
+                                Ok(filter::apply_filters(&channel_data, signal))
+                            } else {
+                                Ok(channel_data)
+                            }
                         })
                         .collect()
                 })
@@ -112,7 +117,8 @@ pub fn read_window(
                     let canvas_context = get_canvas_context(canvas_id);
 
                     let mut image_data: Vec<u8> =
-                        PixelMatrix::new(width, height, data, RenderingType::Line).compute();
+                        PixelMatrix::new(width, height, duration_in_ms, data, RenderingType::Line)
+                            .compute();
 
                     let data = ImageData::new_with_u8_clamped_array_and_sh(
                         Clamped(&mut image_data),
@@ -141,7 +147,6 @@ pub fn set_current_montage(val: &JsValue) {
 }
 
 fn get_canvas_context(canvas_id: String) -> CanvasRenderingContext2d {
-
     let document = window().unwrap().document().unwrap();
     let canvas = document.get_element_by_id(&canvas_id).unwrap();
     let canvas: web_sys::HtmlCanvasElement = canvas

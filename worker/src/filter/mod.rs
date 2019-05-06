@@ -11,7 +11,7 @@ macro_rules! debug {
     }
 }
 
-fn get_input(data: &Vec<f32>) -> (Vec<f32>, usize) {
+fn get_input(data: &[f32]) -> (Vec<f32>, usize) {
     // we add max 50 points before the window to delete the transcient response of the filter.
     // These 50 points are the first 50 points of the signal which are reversed ( to preserve the continuity)
     // TODO : if window is really small, the transcient response can be still here.
@@ -31,7 +31,7 @@ fn get_input(data: &Vec<f32>) -> (Vec<f32>, usize) {
     (input_array, number_of_points_to_prefix)
 }
 
-pub fn apply_filters(data: &Vec<f32>, signal: &Signal) -> Vec<f32> {
+pub fn apply_filters(data: &[f32], signal: &Signal) -> Vec<f32> {
 
     let (mut input_array, number_of_points_to_prefix) = get_input(data);
     let mut output_array: Vec<f32> = input_array.clone();

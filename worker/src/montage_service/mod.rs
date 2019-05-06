@@ -28,7 +28,7 @@ pub fn get_current_montage() -> Option<Montage> {
 }
 
 pub fn get_channel_view(data: &Vec<Vec<f32>>, operation: &Operation) -> Result<Vec<f32>, Error> {
-    recursion(&data, operation)
+    recursion(data, operation)
 }
 
 fn recursion(data: &Vec<Vec<f32>>, operation: &Operation) -> Result<Vec<f32>, Error> {
@@ -39,7 +39,8 @@ fn recursion(data: &Vec<Vec<f32>>, operation: &Operation) -> Result<Vec<f32>, Er
                 ErrorKind::Other,
                 format!("This signal id does not exist {}", signal_id),
             ))
-            .map((|data| data.into_iter().map(|v| v * gain).collect())),
+            // we transform the signal unit from uV to cm because the gain is in uV/cm
+            .map((|data| data.into_iter().map(|v| v / gain).collect())),
         Operation::Composition {
             gain,
             ch1,
