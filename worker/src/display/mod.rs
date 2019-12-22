@@ -25,7 +25,7 @@ pub struct PixelMatrix {
     height: u32,
     display_gain: f32,
     data: Vec<Vec<f32>>,
-    draw: Box<FnMut(&[f32], f32, &mut [u8])>,
+    draw: Box<dyn FnMut(&[f32], f32, &mut [u8])>,
 }
 
 impl<'a> PixelMatrix {
@@ -96,7 +96,7 @@ impl<'a> PixelMatrix {
         height: u32,
         width: u32,
         display_gain: f32,
-    ) -> Box<FnMut(&[f32], f32, &mut [u8]) -> ()> {
+    ) -> Box<dyn FnMut(&[f32], f32, &mut [u8]) -> ()> {
         match rendering_type {
             // We draw only the points
             RenderingType::Point => Box::new(move |data, offset, result| {

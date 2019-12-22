@@ -15,6 +15,20 @@ The aims of this project is to use and see limitations of :
 * ~~[Sound api](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) to apply filters and montages to the signals~~ => see below
 * [VueJS](https://vuejs.org/) (with VueX and Typescript) First time I will use this framework
 
+# How to build 
+
+```shell script
+
+# compile webAssembly project
+./worker/build.sh
+
+# run application
+cd ./app
+npm run serve
+```
+
+
+# FAQ
 
 ## Why we cannot use WebAudio ?
 I thought it will be possible to use WebAudio in the case of an ExG Viewer. This API provide all the components used by a viewer : IIR Filtering, Gain and combination of multiples signals ( montages ). However, this API is used for Audio files and Chromium has limitation about the sampling rate of the signal (between 3000Hz and 384000Hz) : 

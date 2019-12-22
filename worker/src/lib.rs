@@ -101,8 +101,7 @@ pub fn read_window(
                         .signals
                         .iter()
                         .map(|signal: &Signal| {
-                            let channel_data =
-                                montage_service::get_channel_view(&data, &signal.operation)?;
+                            let channel_data = montage_service::get_channel_view(&data, &signal.operation)?;
 
                             if signal.filter.len() > 0 {
                                 Ok(filter::apply_filters(&channel_data, signal))
@@ -125,7 +124,7 @@ pub fn read_window(
                         width,
                         height,
                     )
-                    .unwrap_throw();
+                        .unwrap_throw();
 
                     canvas_context.put_image_data(&data, 0.0, 0.0);
 
